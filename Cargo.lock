@@ -3,6 +3,21 @@
 version = 3
 
 [[package]]
+name = "ab1024-ega"
+version = "0.1.0"
+dependencies = [
+ "embedded-graphics",
+ "embedded-graphics-core",
+ "embedded-hal 1.0.0-rc.2",
+ "embedded-hal-bus",
+ "esp-backtrace",
+ "esp-println",
+ "esp32-hal",
+ "heapless",
+ "tinyqoi",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -161,6 +176,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-can"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9d2e857f87ac832df68fa498d18ddc679175cf3d2e4aa893988e5601baf9438"
+dependencies = [
+ "nb 1.1.0",
+]
+
+[[package]]
 name = "embedded-dma"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -215,6 +239,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b5ad4a01f9cb38117ef85f5cd32176d63875e7eab99c5b60e8492bfdc16dd63"
 dependencies = [
  "embedded-hal 1.0.0-rc.2",
+]
+
+[[package]]
+name = "embedded-hal-bus"
+version = "0.1.0-rc.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16c526a2a7159ab22bf8f7029dfa4c41b19ee192140359370df39c17582c15c7"
+dependencies = [
+ "critical-section",
+ "embedded-hal 1.0.0-rc.2",
+]
+
+[[package]]
+name = "embedded-hal-nb"
+version = "1.0.0-rc.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67c4325112d63ff5991e2841960a1320516c33ff7237e924eaab0772b1123703"
+dependencies = [
+ "embedded-hal 1.0.0-rc.2",
+ "nb 1.1.0",
 ]
 
 [[package]]
@@ -277,8 +321,11 @@ dependencies = [
  "cfg-if",
  "critical-section",
  "embassy-executor",
+ "embedded-can",
  "embedded-dma",
  "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0-rc.2",
+ "embedded-hal-nb",
  "enumset",
  "esp-hal-procmacros",
  "esp32",
@@ -437,19 +484,6 @@ checksum = "d530e1a18b1cb4c484e6e34556a0d948706958449fca0cab753d649f2bce3d1f"
 dependencies = [
  "equivalent",
  "hashbrown",
-]
-
-[[package]]
-name = "inko"
-version = "0.1.0"
-dependencies = [
- "embedded-graphics",
- "embedded-graphics-core",
- "esp-backtrace",
- "esp-println",
- "esp32-hal",
- "heapless",
- "tinyqoi",
 ]
 
 [[package]]
