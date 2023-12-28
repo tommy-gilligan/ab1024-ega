@@ -3,8 +3,10 @@
 
 mod epd;
 
+use heapless::FnvIndexSet;
 use esp_backtrace as _;
 use esp_println::println;
+use tinyqoi::Qoi;
 use hal::{
     clock::ClockControl,
     peripherals::Peripherals,
@@ -14,16 +16,13 @@ use hal::{
     Delay
 };
 use embedded_graphics::{
+    image::Image,
     pixelcolor::Rgb888,
     prelude::*,
     primitives::{
         PrimitiveStyle, PrimitiveStyleBuilder, Rectangle
     },
 };
-
-// EPAPER_RST_PIN  19
-// EPAPER_DC_PIN   33
-// EPAPER_BUSY_PIN 32
 
 #[entry]
 fn main() -> ! {
@@ -51,13 +50,20 @@ fn main() -> ! {
     );
 
     let mut e = epd::Epd::new(spi, rst, dc, busy, delay);
-    println!("before begin");
     e.begin();
-    println!("after begin");
+    let data = include_bytes!("remapped.qoi");
+    let qoi = Qoi::new(data).unwrap();
 
-    println!("before display");
+    let mut pixels = FnvIndexSet::<_, 8>::new();
+    for pixel in qoi.pixels() {
+        pixels.insert(pixel).unwrap();
+    }
+    for pixel in &pixels {
+        println!("{} {} {}", pixel.r(), pixel.g(), pixel.b());
+    }
+
+    Image::new(&qoi, Point::zero()).draw(&mut e).unwrap();
     e.display();
-    println!("after display");
 
     loop {
     }

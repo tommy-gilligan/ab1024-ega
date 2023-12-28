@@ -13,7 +13,6 @@ use hal::{
     prelude::*,
     delay::Delay
 };
-use esp_println::println;
 
 pub struct Epd<'a> {
     spi: Spi<'a, peripherals::SPI2, FullDuplexMode>,
@@ -21,6 +20,7 @@ pub struct Epd<'a> {
     dc: GpioPin<Output<PushPull>, 33>,
     busy: GpioPin<Input<Floating>, 32>,
     delay: Delay,
+    buffer: [u8; (600 * 448) / 2]
 }
 
 impl <'a> Epd<'a> {
@@ -37,6 +37,7 @@ impl <'a> Epd<'a> {
             dc,
             busy,
             delay,
+            buffer: [0b00100010; (600 * 448) / 2]
         }
     }
 
@@ -49,19 +50,12 @@ impl <'a> Epd<'a> {
 
     pub fn send_command(&mut self, command: u8) {
         self.dc.set_low().unwrap();
-        // self.cs.set_low().unwrap();
         self.spi.write(&[command]).unwrap();
-        // self.cs.set_high().unwrap();
     }
 
     pub fn send_data(&mut self, data: &[u8]) {
         self.dc.set_high().unwrap();
         self.spi.write(data).unwrap();
-    }
-
-    pub fn send_byte(&mut self, byte: u8) {
-        self.dc.set_high().unwrap();
-        self.spi.write(&[byte]).unwrap();
     }
 
     pub fn begin(&mut self) -> bool {
@@ -77,27 +71,17 @@ impl <'a> Epd<'a> {
         if state {
             self.delay.delay_ms(10u32);
             self.send_command(DEEP_SLEEP_REGISTER);
-            self.send_byte(0xA5);
+            self.send_data(&[0xA5]);
             self.delay.delay_ms(100u32);
             self.rst.set_low().unwrap();
             self.dc.set_low().unwrap();
             true
         } else {
             self.reset_panel();
-            // Wait for ePaper to be ready by reading busy high signal
-            // float _timeout = millis();
-            // while (!digitalRead(EPAPER_BUSY_PIN)) && ((millis() - _timeout) < INIT_TIMEOUT) {
-            // }
-            // float _timeout = millis();
-            // while ((!digitalRead(EPAPER_BUSY_PIN)) && ((millis() - _timeout) < INIT_TIMEOUT))
-            // ;
-
-            // wself.delay.delay_ms(500u32);
 
             while self.busy.is_low().unwrap() {
             }
             if self.busy.is_low().unwrap() {
-                println!("TIME OUT");
                 return false;
             }
 
@@ -111,31 +95,31 @@ impl <'a> Epd<'a> {
             self.send_data(&power_set_data);
 
             self.send_command(POWER_OFF_SEQ_SET_REGISTER);
-            self.send_byte(0x00);
+            self.send_data(&[PANEL_SET_REGISTER]);
 
             let booster_softstart_data: [u8; 3] = [0xC7, 0xC7, 0x1D];
             self.send_command(BOOSTER_SOFTSTART_REGISTER);
             self.send_data(&booster_softstart_data);
 
             self.send_command(TEMP_SENSOR_EN_REGISTER);
-            self.send_byte(0x00);
+            self.send_data(&[PANEL_SET_REGISTER]);
 
             self.send_command(VCOM_DATA_INTERVAL_REGISTER);
-            self.send_byte(0x37);
+            self.send_data(&[0x37]);
 
             self.send_command(0x60);
-            self.send_byte(0x20);
+            self.send_data(&[0x20]);
 
             let res_set_data: [u8; 4] = [0x02, 0x58, 0x01, 0xC0];
             self.send_command(RESOLUTION_SET_REGISTER);
             self.send_data(&res_set_data);
 
             self.send_command(0xE3);
-            self.send_byte(0xAA);
+            self.send_data(&[0xAA]);
 
             self.delay.delay_ms(100u32);
             self.send_command(VCOM_DATA_INTERVAL_REGISTER);
-            self.send_byte(0x37);
+            self.send_data(&[0x37]);
             true
         }
     }
@@ -144,14 +128,13 @@ impl <'a> Epd<'a> {
         self.set_panel_deep_sleep(false);
 
         let res_set_data: [u8; 4] = [0x02, 0x58, 0x01, 0xc0];
-        self.send_command(0x61);
+        self.send_command(RESOLUTION_SET_REGISTER);
         self.send_data(&res_set_data);
 
-        self.send_command(0x10);
+        self.send_command(DATA_START_TRANS_REGISTER);
         self.dc.set_high().unwrap();
 
-        let buffer: [u8; (600 * 448) / 2] = [0b00110011; (600 * 448) / 2];
-        self.spi.write(&buffer).unwrap();
+        self.spi.write(&self.buffer).unwrap();
 
         self.send_command(POWER_OFF_REGISTER);
         while self.busy.is_low().unwrap() {
@@ -167,33 +150,6 @@ impl <'a> Epd<'a> {
 
         self.delay.delay_ms(200u32);
         self.set_panel_deep_sleep(true);
-    }
-
-    pub fn clean(&mut self) {
-        let res_set_data: [u8; 4] = [0x02, 0x58, 0x01, 0xc0];
-        self.send_command(0x61);
-        self.send_data(&res_set_data);
-
-        self.send_command(0x10);
-        self.dc.set_high().unwrap();
-
-        println!("before bytes");
-        let n_bytes = 600 * 448 / 2;
-        for i in 0..n_bytes {
-            self.spi.write(&[0b00010001]).unwrap();
-        }
-        println!("after bytes");
-
-        println!("power off");
-        self.send_command(POWER_OFF_REGISTER);
-        while self.busy.is_low().unwrap() { }
-        println!("display ref");
-        self.send_command(DISPLAY_REF_REGISTER);
-        while self.busy.is_low().unwrap() { }
-        println!("power off");
-        self.send_command(POWER_OFF_REGISTER);
-        while self.busy.is_high().unwrap() { }
-        self.delay.delay_ms(200u32);
     }
 }
 
@@ -216,17 +172,20 @@ impl DrawTarget for Epd<'_> {
                 (0x00, 0x00, 0x00) => 0b00000000,
                 (0xff, 0xff, 0xff) => 0b00000001,
                 (0x00, 0xff, 0x00) => 0b00000010,
+                (0x00, 160, 0x00) => 0b00000010,
                 (0x00, 0x00, 0xff) => 0b00000011,
                 (0xff, 0x00, 0x00) => 0b00000100,
                 (0xff, 0xff, 0x00) => 0b00000101,
                 _ => 0b00000110,
             };
 
-            // if point.x % 2 == 0 {
-            //     self.buffer[448usize * point.y as usize + ((point.x as usize >> 1) << 1)] = (self.buffer[448usize * point.y as usize + ((point.x as usize >> 1) << 1)] & 0xf0) | nibble;
-            // } else {
-            //     self.buffer[448usize * point.y as usize + ((point.x as usize >> 1) << 1)] = (self.buffer[448usize * point.y as usize + ((point.x as usize >> 1) << 1)] & 0x0f) | (nibble << 4);
-            // }
+            let index = (300usize * point.y as usize + (point.x as usize >> 1)).min(134399);
+
+            if point.x % 2 == 0 {
+                self.buffer[index] = (self.buffer[index] & 0x0f) | (nibble << 4);
+            } else {
+                self.buffer[index] = (self.buffer[index] & 0xf0) | nibble;
+            }
         }
 
         Ok(())
@@ -243,22 +202,26 @@ const ORANGE: u8 = 0b00000110;
 
 const PANEL_SET_REGISTER: u8 =          0x00;
 const POWER_SET_REGISTER: u8 =          0x01;
+const VCM_DC_SET_REGISTER: u8 =         0x02;
 const POWER_OFF_SEQ_SET_REGISTER: u8 =  0x03;
 const POWER_OFF_REGISTER: u8 =          0x04;
 const BOOSTER_SOFTSTART_REGISTER: u8 =  0x06;
 const DEEP_SLEEP_REGISTER: u8 =         0x07;
+
 const DATA_START_TRANS_REGISTER: u8 =   0x10;
 const DATA_STOP_REGISTER: u8 =          0x11;
 const DISPLAY_REF_REGISTER: u8 =        0x12;
 const IMAGE_PROCESS_REGISTER: u8 =      0x13;
+
 const PLL_CONTROL_REGISTER: u8 =        0x30;
+
 const TEMP_SENSOR_REGISTER: u8 =        0x40;
 const TEMP_SENSOR_EN_REGISTER: u8 =     0x41;
 const TEMP_SENSOR_WR_REGISTER: u8 =     0x42;
 const TEMP_SENSOR_RD_REGISTER: u8 =     0x43;
+
 const VCOM_DATA_INTERVAL_REGISTER: u8 = 0x50;
 const LOW_POWER_DETECT_REGISTER: u8 =   0x51;
 const RESOLUTION_SET_REGISTER: u8 =     0x61;
 const STATUS_REGISTER: u8 =             0x71;
 const VCOM_VALUE_REGISTER: u8 =         0x81;
-const VCM_DC_SET_REGISTER: u8 =         0x02;
