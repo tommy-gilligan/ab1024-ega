@@ -4,12 +4,16 @@ mod color;
 mod registers;
 #[cfg(feature="dep:embedded-graphics-core")]
 mod graphics;
+pub mod dither;
 
 use embedded_hal::{
     delay::DelayNs,
     digital::{InputPin, OutputPin},
     spi::SpiDevice,
 };
+
+pub const WIDTH: usize = 600;
+pub const HEIGHT: usize = 448;
 
 pub struct Epd<D, S, RST, DC, BUSY>
 where
