@@ -16,11 +16,11 @@ pub(super) const ORANGE: u8 = 0b00000110;
 const RGB_DISPLAY_PAIRS: [(u32, u8); 7] = [
     (0x00000000, BLACK),
     (0x00FFFFFF, WHITE),
-    (0x0000FF00, GREEN),
-    (0x000000FF, BLUE),
-    (0x00FF0000, RED),
-    (0x00FFFF00, YELLOW),
-    (0x00FF8000, ORANGE),
+    (0x0010BB00, GREEN),
+    (0x001010FF, BLUE),
+    (0x00DD2000, RED),
+    (0x00DDBB00, YELLOW),
+    (0x00E06000, ORANGE),
 ];
 
 #[inline]
