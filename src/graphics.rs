@@ -20,7 +20,7 @@ where
     BUSY: InputPin,
 {
     fn size(&self) -> Size {
-        Size::new(600, 448)
+        Size::new(super::WIDTH, super::HEIGHT)
     }
 }
 

@@ -1,13 +1,3 @@
-const PALETTE: [u32; 7] = [
-    0x00000000,
-    0x00FFFFFF,
-    0x0000FF00,
-    0x000000FF,
-    0x00FF0000,
-    0x00FFFF00,
-    0x00FF8000,
-];
-
 const COEF: i16 = 16;
 const KERNEL_X: isize = 1;
 const KERNEL_WIDTH: isize = 3;
@@ -17,58 +7,14 @@ const KERNEL: [[i16; KERNEL_WIDTH as usize]; KERNEL_HEIGHT as usize] = [
     [3, 5, 1],
 ];
 
-#[inline]
-pub fn RED8(a: u32) -> i16 {
-    (((a) >> 16) & 0xff) as i16
-}
-#[inline]
-pub fn GREEN8(a: u32) -> i16 {
-    (((a) >> 8) & 0xff) as i16
-}
-#[inline]
-pub fn BLUE8(a: u32) -> i16 {
-    (((a)) & 0xff) as i16
-}
-#[inline]
-fn SQR(a: i16) -> i32 {
-    (a as i32) * (a as i32)
-}
-
-fn find_closest_palette(r: i16, g: i16, b: i16) -> usize {
-    let mut min_distance: i32 = 0x7fffffff;
-    let mut contender_count: usize = 0;
-    let mut contender_list: [usize; 7] = [0; 7];
-
-    for i in 0..7 {
-        let pr: i16 = RED8(PALETTE[i]);
-        let pg: i16 = GREEN8(PALETTE[i]);
-        let pb: i16 = BLUE8(PALETTE[i]);
-
-        let current_distance: i32 = SQR(r - pr) + SQR(g - pg) + SQR(b - pb);
-        if current_distance < min_distance {
-            min_distance = current_distance;
-            contender_list[0] = i;
-            contender_count = 1;
-        } else if current_distance == min_distance {
-            contender_list[contender_count] = i;
-            contender_count += 1;
-        }
-    }
-
-    // first if single, otherwise random
-    return contender_list[0];
-}
-
-const WIDTH: usize = 600;
-
 pub struct Dither {
-    dither_buffer: [[[i16; WIDTH + 200] ; 8 ] ; 3 ],
+    dither_buffer: [[[i16; super::WIDTH + 200] ; 8 ] ; 3 ],
 }
 
 impl Dither {
     pub fn new() -> Self {
         Self {
-            dither_buffer: [[[0; WIDTH + 200] ; 8 ] ; 3 ],
+            dither_buffer: [[[0; super::WIDTH + 200] ; 8 ] ; 3 ],
         }
     }
 

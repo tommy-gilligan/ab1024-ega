@@ -14,7 +14,7 @@ dependencies = [
  "esp-println",
  "esp32-hal",
  "heapless",
- "tinyqoi",
+ "tinybmp",
 ]
 
 [[package]]
@@ -784,10 +784,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "tinyqoi"
-version = "0.2.0"
+name = "tinybmp"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4de2a035998f73717bcbe9ce7d0ace9cc7e242371d19bea0a8ee25a531ffef62"
+checksum = "197cc000e382175ff15abd9c54c694ef80ef20cb07e7f956c71e3ea97fc8dc60"
 dependencies = [
  "embedded-graphics",
 ]
