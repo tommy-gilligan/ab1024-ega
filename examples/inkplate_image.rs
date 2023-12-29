@@ -11,8 +11,8 @@ use hal::{
     spi::{master::Spi, SpiMode},
     Delay,
 };
-use embedded_graphics::prelude::*;
-use tinybmp::{RawBmp, Bpp, Header, RawPixel, RowOrder};
+
+use tinybmp::{Bpp, Header, RawBmp, RawPixel, RowOrder};
 
 #[entry]
 fn main() -> ! {
@@ -35,18 +35,17 @@ fn main() -> ! {
     );
 
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
-    esp_println::println!("begin");
     e.begin();
 
-    esp_println::println!("from_slice");
     let bmp = RawBmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
-    esp_println::println!("iterate");
     for pixel in bmp.pixels() {
-        let index = ((pixel.position.x >> 1) as usize + pixel.position.y as usize * 300).min(134400 - 1);
+        let index =
+            ((pixel.position.x >> 1) as usize + pixel.position.y as usize * 300).min(134400 - 1);
         if pixel.position.x % 2 == 0 {
             e.buffer[index] = (e.buffer[index] & 0xf0) | (ab1024_ega::color::closest(pixel.color));
         } else {
-            e.buffer[index] = (e.buffer[index] & 0x0f) | (ab1024_ega::color::closest(pixel.color) << 4);
+            e.buffer[index] =
+                (e.buffer[index] & 0x0f) | (ab1024_ega::color::closest(pixel.color) << 4);
         }
     }
 

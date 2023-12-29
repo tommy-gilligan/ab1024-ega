@@ -33,7 +33,7 @@ fn GREEN8(a: u32) -> i16 {
 }
 #[inline]
 fn BLUE8(a: u32) -> i16 {
-    (((a)) & 0xff) as i16
+    ((a) & 0xff) as i16
 }
 #[inline]
 fn SQR(a: i16) -> i32 {
@@ -45,9 +45,12 @@ pub fn closest(color: u32) -> u8 {
     let g = GREEN8(color);
     let b = BLUE8(color);
 
-    let (_, display) = RGB_DISPLAY_PAIRS.into_iter().min_by_key(|(rgb, _): &(u32, u8)| {
-        SQR(r - RED8(*rgb)) + SQR(g - GREEN8(*rgb)) + SQR(b - BLUE8(*rgb))
-    }).unwrap();
+    let (_, display) = RGB_DISPLAY_PAIRS
+        .into_iter()
+        .min_by_key(|(rgb, _): &(u32, u8)| {
+            SQR(r - RED8(*rgb)) + SQR(g - GREEN8(*rgb)) + SQR(b - BLUE8(*rgb))
+        })
+        .unwrap();
 
     display
 }

@@ -1,10 +1,9 @@
 #![no_std]
 
 pub mod color;
-mod registers;
-#[cfg(feature="dep:embedded-graphics-core")]
+#[cfg(feature = "graphics")]
 mod graphics;
-// pub mod dither;
+mod registers;
 
 use embedded_hal::{
     delay::DelayNs,
@@ -46,7 +45,7 @@ where
             dc,
             busy,
             delay,
-            buffer: [0b00100010; (WIDTH * HEIGHT) / 2],
+            buffer: [0b00010001; (WIDTH * HEIGHT) / 2],
         }
     }
 
@@ -58,13 +57,19 @@ where
         Ok(())
     }
 
-    fn send_command(&mut self, command: u8) -> Result<(), <DC as embedded_hal::digital::ErrorType>::Error> {
+    fn send_command(
+        &mut self,
+        command: u8,
+    ) -> Result<(), <DC as embedded_hal::digital::ErrorType>::Error> {
         self.dc.set_low()?;
         self.spi.write(&[command]).unwrap();
         Ok(())
     }
 
-    fn send_data(&mut self, data: &[u8]) -> Result<(), <DC as embedded_hal::digital::ErrorType>::Error> {
+    fn send_data(
+        &mut self,
+        data: &[u8],
+    ) -> Result<(), <DC as embedded_hal::digital::ErrorType>::Error> {
         self.dc.set_high()?;
         self.spi.write(data).unwrap();
         Ok(())
@@ -75,12 +80,15 @@ where
             Ok(true) => {
                 self.set_panel_deep_sleep(true).unwrap();
                 true
-            },
-            _ => false
+            }
+            _ => false,
         }
     }
 
-    fn set_panel_deep_sleep(&mut self, state: bool) -> Result<bool, <BUSY as embedded_hal::digital::ErrorType>::Error> {
+    fn set_panel_deep_sleep(
+        &mut self,
+        state: bool,
+    ) -> Result<bool, <BUSY as embedded_hal::digital::ErrorType>::Error> {
         if state {
             self.delay.delay_ms(10u32);
             self.send_command(registers::DEEP_SLEEP_REGISTER).unwrap();
@@ -105,44 +113,52 @@ where
             self.send_command(registers::POWER_SET_REGISTER).unwrap();
             self.send_data(&power_set_data).unwrap();
 
-            self.send_command(registers::POWER_OFF_SEQ_SET_REGISTER).unwrap();
+            self.send_command(registers::POWER_OFF_SEQ_SET_REGISTER)
+                .unwrap();
             self.send_data(&[registers::PANEL_SET_REGISTER]).unwrap();
 
             let booster_softstart_data: [u8; 3] = [0xC7, 0xC7, 0x1D];
-            self.send_command(registers::BOOSTER_SOFTSTART_REGISTER).unwrap();
+            self.send_command(registers::BOOSTER_SOFTSTART_REGISTER)
+                .unwrap();
             self.send_data(&booster_softstart_data).unwrap();
 
-            self.send_command(registers::TEMP_SENSOR_EN_REGISTER).unwrap();
+            self.send_command(registers::TEMP_SENSOR_EN_REGISTER)
+                .unwrap();
             self.send_data(&[registers::PANEL_SET_REGISTER]).unwrap();
 
-            self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER).unwrap();
+            self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)
+                .unwrap();
             self.send_data(&[0x37]).unwrap();
 
             self.send_command(0x60).unwrap();
             self.send_data(&[0x20]).unwrap();
 
             let res_set_data: [u8; 4] = [0x02, 0x58, 0x01, 0xC0];
-            self.send_command(registers::RESOLUTION_SET_REGISTER).unwrap();
+            self.send_command(registers::RESOLUTION_SET_REGISTER)
+                .unwrap();
             self.send_data(&res_set_data).unwrap();
 
             self.send_command(0xE3).unwrap();
             self.send_data(&[0xAA]).unwrap();
 
             self.delay.delay_ms(100u32);
-            self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER).unwrap();
+            self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)
+                .unwrap();
             self.send_data(&[0x37]).unwrap();
             Ok(true)
         }
     }
- 
+
     pub fn display(&mut self) -> Result<(), <BUSY as embedded_hal::digital::ErrorType>::Error> {
         self.set_panel_deep_sleep(false).unwrap();
 
         let res_set_data: [u8; 4] = [0x02, 0x58, 0x01, 0xc0];
-        self.send_command(registers::RESOLUTION_SET_REGISTER).unwrap();
+        self.send_command(registers::RESOLUTION_SET_REGISTER)
+            .unwrap();
         self.send_data(&res_set_data).unwrap();
 
-        self.send_command(registers::DATA_START_TRANS_REGISTER).unwrap();
+        self.send_command(registers::DATA_START_TRANS_REGISTER)
+            .unwrap();
         self.dc.set_high().unwrap();
 
         self.spi.write(&self.buffer).unwrap();

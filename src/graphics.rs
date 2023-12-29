@@ -2,8 +2,7 @@ use super::Epd;
 use embedded_graphics_core::{
     draw_target::DrawTarget,
     pixelcolor::{Rgb888, RgbColor},
-    prelude::{Dimensions, OriginDimensions, PixelColor, Point, Size},
-    primitives::Rectangle,
+    prelude::{OriginDimensions, Size},
     Pixel,
 };
 use embedded_hal::{
@@ -20,7 +19,10 @@ where
     BUSY: InputPin,
 {
     fn size(&self) -> Size {
-        Size::new(super::WIDTH, super::HEIGHT)
+        Size::new(
+            super::WIDTH.try_into().unwrap(),
+            super::HEIGHT.try_into().unwrap(),
+        )
     }
 }
 
@@ -41,16 +43,14 @@ where
     {
         for pixel in pixels {
             let point = pixel.0;
-            let [r, g, b] = [pixel.1.r(), pixel.1.g(), pixel.1.b()];
 
-            let nibble = match (r, g, b) {
-                (0x00, 0x00, 0x00) => super::color::BLACK,
-                (0xff, 0xff, 0xff) => super::color::WHITE,
-                (0x00, 0xff, 0x00) => super::color::GREEN,
-                (0x00, 160, 0x00) => super::color::ORANGE,
-                (0x00, 0x00, 0xff) => super::color::BLUE,
-                (0xff, 0x00, 0x00) => super::color::RED,
-                (0xff, 0xff, 0x00) => super::color::YELLOW,
+            let nibble = match pixel.1 {
+                Rgb888::BLACK => super::color::BLACK,
+                Rgb888::WHITE => super::color::WHITE,
+                Rgb888::GREEN => super::color::GREEN,
+                Rgb888::BLUE => super::color::BLUE,
+                Rgb888::RED => super::color::RED,
+                Rgb888::YELLOW => super::color::YELLOW,
                 _ => super::color::ORANGE,
             };
 

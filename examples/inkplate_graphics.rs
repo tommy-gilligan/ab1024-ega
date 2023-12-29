@@ -2,9 +2,11 @@
 #![no_main]
 
 use embedded_graphics::{
+    mono_font::MonoTextStyle,
     pixelcolor::Rgb888,
     prelude::*,
-    primitives::{PrimitiveStyle, PrimitiveStyleBuilder, Rectangle},
+    primitives::{Circle, PrimitiveStyle},
+    text::Text,
 };
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
@@ -16,6 +18,7 @@ use hal::{
     spi::{master::Spi, SpiMode},
     Delay,
 };
+use profont::PROFONT_24_POINT;
 
 #[entry]
 fn main() -> ! {
@@ -39,6 +42,25 @@ fn main() -> ! {
 
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
     e.begin();
+
+    let text_style = MonoTextStyle::new(&PROFONT_24_POINT, Rgb888::BLACK);
+    Text::new("My favourite colors:", Point::new(24, 48), text_style)
+        .draw(&mut e)
+        .unwrap();
+
+    Circle::with_center(Point::new(150, 224), 200)
+        .into_styled(PrimitiveStyle::with_fill(Rgb888::RED))
+        .draw(&mut e)
+        .unwrap();
+    Circle::with_center(Point::new(300, 224), 200)
+        .into_styled(PrimitiveStyle::with_fill(Rgb888::YELLOW))
+        .draw(&mut e)
+        .unwrap();
+    Circle::with_center(Point::new(450, 224), 200)
+        .into_styled(PrimitiveStyle::with_fill(Rgb888::BLUE))
+        .draw(&mut e)
+        .unwrap();
+
     e.display();
 
     loop {}
