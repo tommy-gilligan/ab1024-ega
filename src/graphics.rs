@@ -10,6 +10,7 @@ use embedded_hal::{
     digital::{InputPin, OutputPin},
     spi::SpiDevice,
 };
+
 impl<D, S, RST, DC, BUSY> OriginDimensions for Epd<D, S, RST, DC, BUSY>
 where
     D: DelayNs,
@@ -44,15 +45,16 @@ where
         for pixel in pixels {
             let point = pixel.0;
 
-            let nibble = match pixel.1 {
-                Rgb888::BLACK => super::color::BLACK,
-                Rgb888::WHITE => super::color::WHITE,
-                Rgb888::GREEN => super::color::GREEN,
-                Rgb888::BLUE => super::color::BLUE,
-                Rgb888::RED => super::color::RED,
-                Rgb888::YELLOW => super::color::YELLOW,
-                _ => super::color::ORANGE,
-            };
+            let nibble: u8 = match pixel.1 {
+                Rgb888::BLACK => super::color::Color::BLACK,
+                Rgb888::WHITE => super::color::Color::WHITE,
+                Rgb888::GREEN => super::color::Color::GREEN,
+                Rgb888::BLUE => super::color::Color::BLUE,
+                Rgb888::RED => super::color::Color::RED,
+                Rgb888::YELLOW => super::color::Color::YELLOW,
+                _ => super::color::Color::ORANGE,
+            }
+            .into();
 
             let index = (300usize * point.y as usize + (point.x as usize >> 1)).min(134399);
 

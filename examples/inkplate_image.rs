@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
 use hal::{
@@ -11,8 +12,8 @@ use hal::{
     spi::{master::Spi, SpiMode},
     Delay,
 };
-
-use tinybmp::{Bpp, Header, RawBmp, RawPixel, RowOrder};
+use nalgebra::Vector3;
+use tinybmp::Bmp;
 
 #[entry]
 fn main() -> ! {
@@ -37,19 +38,27 @@ fn main() -> ! {
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
     e.begin();
 
-    let bmp = RawBmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
-    for pixel in bmp.pixels() {
-        let index =
-            ((pixel.position.x >> 1) as usize + pixel.position.y as usize * 300).min(134400 - 1);
-        if pixel.position.x % 2 == 0 {
-            e.buffer[index] = (e.buffer[index] & 0xf0) | (ab1024_ega::color::closest(pixel.color));
-        } else {
-            e.buffer[index] =
-                (e.buffer[index] & 0x0f) | (ab1024_ega::color::closest(pixel.color) << 4);
-        }
+    let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
+    for (pixel, color) in bmp.pixels().zip(dither::Dither::<
+        _,
+        _,
+        { ab1024_ega::WIDTH },
+        { ab1024_ega::WIDTH + 1 },
+    >::new(
+        bmp.pixels().map(|c| {
+            let color = c.1;
+            Vector3::<i16>::new(color.r().into(), color.g().into(), color.b().into())
+        }),
+        ab1024_ega::color::closestrgb,
+    )) {
+        e.set_pixel(
+            pixel.0.x as usize,
+            pixel.0.y as usize,
+            ab1024_ega::color::closest(color),
+        )
     }
 
-    e.display();
+    e.display().unwrap();
 
     loop {}
 }

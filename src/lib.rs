@@ -27,7 +27,7 @@ where
     dc: DC,
     busy: BUSY,
     delay: D,
-    pub buffer: [u8; (WIDTH * HEIGHT) / 2],
+    buffer: [u8; (WIDTH * HEIGHT) / 2],
 }
 
 impl<D, S, RST, DC, BUSY> Epd<D, S, RST, DC, BUSY>
@@ -45,7 +45,7 @@ where
             dc,
             busy,
             delay,
-            buffer: [0b00010001; (WIDTH * HEIGHT) / 2],
+            buffer: [0b00100010; (WIDTH * HEIGHT) / 2],
         }
     }
 
@@ -175,5 +175,15 @@ where
         self.delay.delay_ms(200u32);
         self.set_panel_deep_sleep(true).unwrap();
         Ok(())
+    }
+
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: color::Color) {
+        let index = ((x >> 1) + y * WIDTH / 2).min(WIDTH * HEIGHT / 2 - 1);
+        let color: u8 = color.into();
+        if x % 2 == 0 {
+            self.buffer[index] = (self.buffer[index] & 0xf0) | color;
+        } else {
+            self.buffer[index] = (self.buffer[index] & 0x0f) | (color << 4);
+        }
     }
 }

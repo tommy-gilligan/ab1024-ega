@@ -1,54 +1,60 @@
-#[allow(dead_code)]
-pub(super) const BLACK: u8 = 0b00000000;
-#[allow(dead_code)]
-pub(super) const WHITE: u8 = 0b00000001;
-#[allow(dead_code)]
-pub(super) const GREEN: u8 = 0b00000010;
-#[allow(dead_code)]
-pub(super) const BLUE: u8 = 0b00000011;
-#[allow(dead_code)]
-pub(super) const RED: u8 = 0b00000100;
-#[allow(dead_code)]
-pub(super) const YELLOW: u8 = 0b00000101;
-#[allow(dead_code)]
-pub(super) const ORANGE: u8 = 0b00000110;
+use embedded_graphics_core::pixelcolor::{Rgb888, RgbColor};
+use num_enum::IntoPrimitive;
 
-const RGB_DISPLAY_PAIRS: [(u32, u8); 7] = [
-    (0x00000000, BLACK),
-    (0x00FFFFFF, WHITE),
-    (0x0010BB00, GREEN),
-    (0x001010FF, BLUE),
-    (0x00DD2000, RED),
-    (0x00DDBB00, YELLOW),
-    (0x00E06000, ORANGE),
+#[derive(IntoPrimitive)]
+#[repr(u8)]
+pub enum Color {
+    BLACK = 0b00000000,
+    WHITE = 0b00000001,
+    GREEN = 0b00000010,
+    BLUE = 0b00000011,
+    RED = 0b00000100,
+    YELLOW = 0b00000101,
+    ORANGE = 0b00000110,
+}
+
+const RGB_DISPLAY_PAIRS: [(u32, Color); 7] = [
+    (0x00000000, Color::BLACK),
+    (0x00FFFFFF, Color::WHITE),
+    (0x0010cB10, Color::GREEN),
+    (0x002020FF, Color::BLUE),
+    (0x00ff3020, Color::RED),
+    (0x00ffff50, Color::YELLOW),
+    (0x00f07020, Color::ORANGE),
 ];
 
-#[inline]
-fn RED8(a: u32) -> i16 {
-    (((a) >> 16) & 0xff) as i16
-}
-#[inline]
-fn GREEN8(a: u32) -> i16 {
-    (((a) >> 8) & 0xff) as i16
-}
-#[inline]
-fn BLUE8(a: u32) -> i16 {
-    ((a) & 0xff) as i16
-}
-#[inline]
-fn SQR(a: i16) -> i32 {
-    (a as i32) * (a as i32)
-}
+const RGB_DISPLAY_PAIRS_RGB: [(Rgb888, Color); 7] = [
+    (Rgb888::new(0x00, 0x00, 0x00), Color::BLACK),
+    (Rgb888::new(0xFF, 0xFF, 0xFF), Color::WHITE),
+    (Rgb888::new(0x10, 0xcb, 0x10), Color::GREEN),
+    (Rgb888::new(0x20, 0x20, 0xff), Color::BLUE),
+    (Rgb888::new(0xff, 0x30, 0x20), Color::RED),
+    (Rgb888::new(0xff, 0xff, 0x50), Color::YELLOW),
+    (Rgb888::new(0xf0, 0x70, 0x20), Color::ORANGE),
+];
 
-pub fn closest(color: u32) -> u8 {
-    let r = RED8(color);
-    let g = GREEN8(color);
-    let b = BLUE8(color);
-
+pub fn closest(color: Rgb888) -> Color {
     let (_, display) = RGB_DISPLAY_PAIRS
         .into_iter()
-        .min_by_key(|(rgb, _): &(u32, u8)| {
-            SQR(r - RED8(*rgb)) + SQR(g - GREEN8(*rgb)) + SQR(b - BLUE8(*rgb))
+        .min_by_key(|(rgb, _): &(u32, Color)| {
+            let r = (color.r() as u32).abs_diff((((*rgb) >> 16) & 0xff) as u32);
+            let g = (color.g() as u32).abs_diff((((*rgb) >> 8) & 0xff) as u32);
+            let b = (color.b() as u32).abs_diff(((*rgb) & 0xff) as u32);
+            r * r + g * g + b * b
+        })
+        .unwrap();
+
+    display
+}
+
+pub fn closestrgb(color: Rgb888) -> Rgb888 {
+    let (display, _) = RGB_DISPLAY_PAIRS_RGB
+        .into_iter()
+        .min_by_key(|(rgb, _): &(Rgb888, Color)| {
+            let r = (color.r() as u32).abs_diff(rgb.r() as u32);
+            let g = (color.g() as u32).abs_diff(rgb.g() as u32);
+            let b = (color.b() as u32).abs_diff(rgb.b() as u32);
+            r * r + g * g + b * b
         })
         .unwrap();
 
