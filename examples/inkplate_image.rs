@@ -1,7 +1,8 @@
 #![no_std]
 #![no_main]
 
-use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
+use dither::DitherTarget;
+use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
 use hal::{
@@ -12,8 +13,9 @@ use hal::{
     spi::{master::Spi, SpiMode},
     Delay,
 };
-use nalgebra::Vector3;
 use tinybmp::Bmp;
+
+const WIDTH: usize = 600;
 
 #[entry]
 fn main() -> ! {
@@ -35,29 +37,13 @@ fn main() -> ! {
         cs,
     );
 
+    let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
     e.begin();
 
-    let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
-    for (pixel, color) in bmp.pixels().zip(dither::Dither::<
-        _,
-        _,
-        { ab1024_ega::WIDTH },
-        { ab1024_ega::WIDTH + 1 },
-    >::new(
-        bmp.pixels().map(|c| {
-            let color = c.1;
-            Vector3::<i16>::new(color.r().into(), color.g().into(), color.b().into())
-        }),
-        ab1024_ega::color::closestrgb,
-    )) {
-        e.set_pixel(
-            pixel.0.x as usize,
-            pixel.0.y as usize,
-            ab1024_ega::color::closest(color),
-        )
-    }
-
+    let mut ed: DitherTarget<'_, _, _, WIDTH, { WIDTH + 1 }> =
+        DitherTarget::new(&mut e, ab1024_ega::color::closestrgb);
+    bmp.draw(&mut ed).unwrap();
     e.display().unwrap();
 
     loop {}

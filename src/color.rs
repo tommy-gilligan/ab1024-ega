@@ -37,9 +37,9 @@ pub fn closest(color: Rgb888) -> Color {
     let (_, display) = RGB_DISPLAY_PAIRS
         .into_iter()
         .min_by_key(|(rgb, _): &(u32, Color)| {
-            let r = (color.r() as u32).abs_diff((((*rgb) >> 16) & 0xff) as u32);
-            let g = (color.g() as u32).abs_diff((((*rgb) >> 8) & 0xff) as u32);
-            let b = (color.b() as u32).abs_diff(((*rgb) & 0xff) as u32);
+            let r = (color.r() as u32).abs_diff((((*rgb) >> 16) & 0xff));
+            let g = (color.g() as u32).abs_diff((((*rgb) >> 8) & 0xff));
+            let b = (color.b() as u32).abs_diff(((*rgb) & 0xff));
             r * r + g * g + b * b
         })
         .unwrap();

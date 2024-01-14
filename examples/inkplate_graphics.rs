@@ -61,7 +61,7 @@ fn main() -> ! {
         .draw(&mut e)
         .unwrap();
 
-    e.display();
+    e.display().unwrap();
 
     loop {}
 }
