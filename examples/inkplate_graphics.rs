@@ -3,7 +3,6 @@
 
 use embedded_graphics::{
     mono_font::MonoTextStyle,
-    pixelcolor::Rgb888,
     prelude::*,
     primitives::{Circle, PrimitiveStyle},
     text::Text,
@@ -43,21 +42,22 @@ fn main() -> ! {
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
     e.begin();
 
-    let text_style = MonoTextStyle::new(&PROFONT_24_POINT, Rgb888::BLACK);
+
+    let text_style = MonoTextStyle::new(&PROFONT_24_POINT, ab1024_ega::color::Color::BLACK);
     Text::new("My favourite colors:", Point::new(24, 48), text_style)
         .draw(&mut e)
         .unwrap();
 
     Circle::with_center(Point::new(150, 224), 200)
-        .into_styled(PrimitiveStyle::with_fill(Rgb888::RED))
+        .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::RED))
         .draw(&mut e)
         .unwrap();
     Circle::with_center(Point::new(300, 224), 200)
-        .into_styled(PrimitiveStyle::with_fill(Rgb888::YELLOW))
+        .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::YELLOW))
         .draw(&mut e)
         .unwrap();
     Circle::with_center(Point::new(450, 224), 200)
-        .into_styled(PrimitiveStyle::with_fill(Rgb888::BLUE))
+        .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::BLUE))
         .draw(&mut e)
         .unwrap();
 

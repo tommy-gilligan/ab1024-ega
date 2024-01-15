@@ -1,7 +1,7 @@
 use embedded_graphics_core::pixelcolor::{Rgb888, RgbColor};
 use num_enum::IntoPrimitive;
 
-#[derive(IntoPrimitive)]
+#[derive(IntoPrimitive, PartialEq, Copy, Clone)]
 #[repr(u8)]
 pub enum Color {
     BLACK = 0b00000000,
@@ -33,30 +33,29 @@ const RGB_DISPLAY_PAIRS_RGB: [(Rgb888, Color); 7] = [
     (Rgb888::new(0xf0, 0x70, 0x20), Color::ORANGE),
 ];
 
-pub fn closest(color: Rgb888) -> Color {
-    let (_, display) = RGB_DISPLAY_PAIRS
-        .into_iter()
-        .min_by_key(|(rgb, _): &(u32, Color)| {
-            let r = (color.r() as u32).abs_diff((((*rgb) >> 16) & 0xff));
-            let g = (color.g() as u32).abs_diff((((*rgb) >> 8) & 0xff));
-            let b = (color.b() as u32).abs_diff(((*rgb) & 0xff));
-            r * r + g * g + b * b
-        })
-        .unwrap();
+impl From<Rgb888> for Color {
+    fn from(color: Rgb888) -> Self {
+        let (_, display) = RGB_DISPLAY_PAIRS
+            .into_iter()
+            .min_by_key(|(rgb, _): &(u32, Color)| {
+                let r = (color.r() as u32).abs_diff(((*rgb) >> 16) & 0xff);
+                let g = (color.g() as u32).abs_diff(((*rgb) >> 8) & 0xff);
+                let b = (color.b() as u32).abs_diff((*rgb) & 0xff);
+                r * r + g * g + b * b
+            })
+            .unwrap();
 
-    display
+        display
+    }
 }
 
-pub fn closestrgb(color: Rgb888) -> Rgb888 {
-    let (display, _) = RGB_DISPLAY_PAIRS_RGB
-        .into_iter()
-        .min_by_key(|(rgb, _): &(Rgb888, Color)| {
-            let r = (color.r() as u32).abs_diff(rgb.r() as u32);
-            let g = (color.g() as u32).abs_diff(rgb.g() as u32);
-            let b = (color.b() as u32).abs_diff(rgb.b() as u32);
-            r * r + g * g + b * b
-        })
-        .unwrap();
+impl From<Color> for Rgb888 {
+    fn from(color: Color) -> Self {
+        let (display, _) = RGB_DISPLAY_PAIRS_RGB
+            .into_iter()
+            .find(|(_, c): &(Rgb888, Color)| *c == color)
+            .unwrap();
 
-    display
+        display
+    }
 }

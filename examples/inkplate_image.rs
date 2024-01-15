@@ -41,8 +41,7 @@ fn main() -> ! {
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
     e.begin();
 
-    let mut ed: DitherTarget<'_, _, _, WIDTH, { WIDTH + 1 }> =
-        DitherTarget::new(&mut e, ab1024_ega::color::closestrgb);
+    let mut ed: DitherTarget<'_, _, WIDTH, { WIDTH + 1 }> = DitherTarget::new(&mut e);
     bmp.draw(&mut ed).unwrap();
     e.display().unwrap();
 
