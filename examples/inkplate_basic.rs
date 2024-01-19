@@ -1,12 +1,6 @@
 #![no_std]
 #![no_main]
 
-use embedded_graphics::{
-    mono_font::MonoTextStyle,
-    prelude::*,
-    primitives::{Circle, PrimitiveStyle},
-    text::Text,
-};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
 use hal::{
@@ -17,7 +11,6 @@ use hal::{
     spi::{master::Spi, SpiMode},
     Delay,
 };
-use profont::PROFONT_24_POINT;
 
 #[entry]
 fn main() -> ! {
@@ -40,27 +33,25 @@ fn main() -> ! {
     );
 
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
-    e.init();
+    e.init().unwrap();
+    let colors = [
+        ab1024_ega::color::Color::BLACK,
+        ab1024_ega::color::Color::WHITE,
+        ab1024_ega::color::Color::GREEN,
+        ab1024_ega::color::Color::BLUE,
+        ab1024_ega::color::Color::RED,
+        ab1024_ega::color::Color::YELLOW,
+        ab1024_ega::color::Color::ORANGE,
+    ];
+    let stripe_width = ab1024_ega::WIDTH / colors.len();
 
-
-    let text_style = MonoTextStyle::new(&PROFONT_24_POINT, ab1024_ega::color::Color::BLACK);
-    Text::new("My favourite colors:", Point::new(24, 48), text_style)
-        .draw(&mut e)
-        .unwrap();
-
-    Circle::with_center(Point::new(150, 224), 200)
-        .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::RED))
-        .draw(&mut e)
-        .unwrap();
-    Circle::with_center(Point::new(300, 224), 200)
-        .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::YELLOW))
-        .draw(&mut e)
-        .unwrap();
-    Circle::with_center(Point::new(450, 224), 200)
-        .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::BLUE))
-        .draw(&mut e)
-        .unwrap();
-
+    for (index, color) in colors.into_iter().enumerate() {
+        for x in (index * stripe_width)..ab1024_ega::WIDTH {
+            for y in 0..ab1024_ega::HEIGHT {
+                e.set_pixel(x, y, color);
+            }
+        }
+    }
     e.display().unwrap();
 
     loop {}

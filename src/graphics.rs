@@ -1,8 +1,8 @@
 use super::Epd;
 use embedded_graphics_core::{
     draw_target::DrawTarget,
-    pixelcolor::{PixelColor, raw::RawU4},
-    prelude::{OriginDimensions, Size},
+    pixelcolor::{PixelColor, RgbColor, Rgb888, raw::RawU4},
+    prelude::{OriginDimensions, Size, RawData},
     Pixel,
 };
 use embedded_hal::{
@@ -10,6 +10,7 @@ use embedded_hal::{
     digital::{InputPin, OutputPin},
     spi::SpiDevice,
 };
+use crate::color::Color;
 
 impl<D, S, RST, DC, BUSY> OriginDimensions for Epd<D, S, RST, DC, BUSY>
 where
@@ -57,3 +58,46 @@ where
 impl PixelColor for super::color::Color {
     type Raw = RawU4;
 }
+
+impl From<RawU4> for Color {
+    fn from(color: RawU4) -> Self {
+        color.into_inner().try_into().unwrap()
+    }
+}
+
+impl From<Rgb888> for Color {
+    fn from(color: Rgb888) -> Self {
+        let (_, display) = RGB_DISPLAY_PAIRS
+            .into_iter()
+            .min_by_key(|(rgb, _): &(Rgb888, Color)| {
+                let r: u32 = (<u8 as Into<u32>>::into(color.r())).abs_diff(<u8 as Into<u32>>::into(rgb.r()));
+                let g: u32 = (<u8 as Into<u32>>::into(color.g())).abs_diff(<u8 as Into<u32>>::into(rgb.g()));
+                let b: u32 = (<u8 as Into<u32>>::into(color.b())).abs_diff(<u8 as Into<u32>>::into(rgb.b()));
+                r * r + g * g + b * b
+            })
+            .unwrap();
+
+        display
+    }
+}
+
+impl From<Color> for Rgb888 {
+    fn from(color: Color) -> Self {
+        let (display, _) = RGB_DISPLAY_PAIRS
+            .into_iter()
+            .find(|(_, c): &(Rgb888, Color)| *c == color)
+            .unwrap();
+
+        display
+    }
+}
+
+const RGB_DISPLAY_PAIRS: [(Rgb888, Color); 7] = [
+    (Rgb888::new(0x00, 0x00, 0x00), Color::BLACK),
+    (Rgb888::new(0xFF, 0xFF, 0xFF), Color::WHITE),
+    (Rgb888::new(0x10, 0xcb, 0x10), Color::GREEN),
+    (Rgb888::new(0x20, 0x20, 0xff), Color::BLUE),
+    (Rgb888::new(0xff, 0x30, 0x20), Color::RED),
+    (Rgb888::new(0xff, 0xff, 0x50), Color::YELLOW),
+    (Rgb888::new(0xf0, 0x70, 0x20), Color::ORANGE),
+];

@@ -15,8 +15,6 @@ use hal::{
 };
 use tinybmp::Bmp;
 
-const WIDTH: usize = 600;
-
 #[entry]
 fn main() -> ! {
     let peripherals = Peripherals::take();
@@ -39,9 +37,9 @@ fn main() -> ! {
 
     let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
-    e.begin();
+    e.init().unwrap();
 
-    let mut ed: DitherTarget<'_, _, WIDTH, { WIDTH + 1 }> = DitherTarget::new(&mut e);
+    let mut ed: DitherTarget<'_, _, ab1024::WIDTH, { ab1024::WIDTH + 1 }> = DitherTarget::new(&mut e);
     bmp.draw(&mut ed).unwrap();
     e.display().unwrap();
 

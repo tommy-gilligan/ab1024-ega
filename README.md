@@ -6,11 +6,10 @@ AB1024-EGA connected to other boards.
 
 ## TODO
 - Eliminate panics in driver.  Replace unwrap with proper errors.
-- If possible, use a dedicated partition for image in inkscape_image example.
-  This should allow faster reflashing when changes are made to the code.
-- Investigate alternatives to Rgb888 for embedded-graphics support.
-- Refactor src/lib.rs
-- Add partial updates (if the hardwrae supports it).  Reverse engineer?  This
-  could make a buffer unnecessary.
 - Document
 - Test
+
+- If possible, use a dedicated partition for image in inkscape_image example.
+  This should allow faster reflashing when changes are made to the code.
+- Add partial updates (if the hardwrae supports it).  Reverse engineer?  This
+  could make a buffer unnecessary.

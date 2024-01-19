@@ -1,15 +1,28 @@
 #![no_std]
 
 pub mod color;
+mod registers;
+
 #[cfg(feature = "graphics")]
 mod graphics;
-mod registers;
 
 use embedded_hal::{
     delay::DelayNs,
     digital::{InputPin, OutputPin},
     spi::SpiDevice,
 };
+
+#[derive(Debug)]
+pub enum Error<PS> where PS: embedded_hal::digital::Error {
+    PinSet(PS),
+    Spi
+}
+
+impl <T>From<T> for Error<T> where T: embedded_hal::digital::Error {
+    fn from(e: T) -> Self {
+        Self::PinSet(e)
+    }
+}
 
 pub const WIDTH: usize = 600;
 pub const HEIGHT: usize = 448;
@@ -45,11 +58,11 @@ where
             dc,
             busy,
             delay,
-            buffer: [0b00100010; (WIDTH * HEIGHT) / 2],
+            buffer: [0b00010001; (WIDTH * HEIGHT) / 2],
         }
     }
 
-    fn reset_panel(&mut self) -> Result<(), <RST as embedded_hal::digital::ErrorType>::Error> {
+    fn reset_panel(&mut self) -> Result<(), Error<RST::Error>> {
         self.rst.set_low()?;
         self.delay.delay_ms(1u32);
         self.rst.set_high()?;
@@ -60,130 +73,123 @@ where
     fn send_command(
         &mut self,
         command: u8,
-    ) -> Result<(), <DC as embedded_hal::digital::ErrorType>::Error> {
-        self.dc.set_low()?;
-        self.spi.write(&[command]).unwrap();
+    ) -> Result<(), Error<RST::Error>> {
+        self.dc.set_low().unwrap();
+        self.spi.write(&[command]).map_err(|_| Error::Spi)?;
         Ok(())
     }
 
     fn send_data(
         &mut self,
         data: &[u8],
-    ) -> Result<(), <DC as embedded_hal::digital::ErrorType>::Error> {
-        self.dc.set_high()?;
-        self.spi.write(data).unwrap();
+    ) -> Result<(), Error<RST::Error>> {
+        self.dc.set_high().unwrap();
+        self.spi.write(data).map_err(|_| Error::Spi)?;
         Ok(())
     }
 
-    pub fn begin(&mut self) -> bool {
-        match self.set_panel_deep_sleep(false) {
-            Ok(true) => {
-                self.set_panel_deep_sleep(true).unwrap();
-                true
-            }
-            _ => false,
-        }
+    pub fn init(&mut self) -> Result<(), Error<RST::Error>> {
+        self.wakeup()?;
+        self.sleep()?;
+        Ok(())
     }
 
-    fn set_panel_deep_sleep(
+    fn sleep(
         &mut self,
-        state: bool,
-    ) -> Result<bool, <BUSY as embedded_hal::digital::ErrorType>::Error> {
-        if state {
-            self.delay.delay_ms(10u32);
-            self.send_command(registers::DEEP_SLEEP_REGISTER).unwrap();
-            self.send_data(&[0xA5]).unwrap();
-            self.delay.delay_ms(100u32);
-            self.rst.set_low().unwrap();
-            self.dc.set_low().unwrap();
-            Ok(true)
-        } else {
-            self.reset_panel().unwrap();
-
-            while self.busy.is_low()? {}
-            if self.busy.is_low()? {
-                return Ok(false);
-            }
-
-            let panel_set_data: [u8; 2] = [0xEF, 0x08];
-            self.send_command(registers::PANEL_SET_REGISTER).unwrap();
-            self.send_data(&panel_set_data).unwrap();
-
-            let power_set_data: [u8; 4] = [0x37, 0x00, 0x05, 0x05];
-            self.send_command(registers::POWER_SET_REGISTER).unwrap();
-            self.send_data(&power_set_data).unwrap();
-
-            self.send_command(registers::POWER_OFF_SEQ_SET_REGISTER)
-                .unwrap();
-            self.send_data(&[registers::PANEL_SET_REGISTER]).unwrap();
-
-            let booster_softstart_data: [u8; 3] = [0xC7, 0xC7, 0x1D];
-            self.send_command(registers::BOOSTER_SOFTSTART_REGISTER)
-                .unwrap();
-            self.send_data(&booster_softstart_data).unwrap();
-
-            self.send_command(registers::TEMP_SENSOR_EN_REGISTER)
-                .unwrap();
-            self.send_data(&[registers::PANEL_SET_REGISTER]).unwrap();
-
-            self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)
-                .unwrap();
-            self.send_data(&[0x37]).unwrap();
-
-            self.send_command(0x60).unwrap();
-            self.send_data(&[0x20]).unwrap();
-
-            let res_set_data: [u8; 4] = [0x02, 0x58, 0x01, 0xC0];
-            self.send_command(registers::RESOLUTION_SET_REGISTER)
-                .unwrap();
-            self.send_data(&res_set_data).unwrap();
-
-            self.send_command(0xE3).unwrap();
-            self.send_data(&[0xAA]).unwrap();
-
-            self.delay.delay_ms(100u32);
-            self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)
-                .unwrap();
-            self.send_data(&[0x37]).unwrap();
-            Ok(true)
-        }
+    ) -> Result<(), Error<RST::Error>> {
+        self.delay.delay_ms(10u32);
+        self.send_command(registers::DEEP_SLEEP_REGISTER)?;
+        self.send_data(&[0xA5])?;
+        self.delay.delay_ms(100u32);
+        self.rst.set_low()?;
+        self.dc.set_low().unwrap();
+        Ok(())
     }
 
-    pub fn display(&mut self) -> Result<(), <BUSY as embedded_hal::digital::ErrorType>::Error> {
-        self.set_panel_deep_sleep(false).unwrap();
+    fn wakeup(
+        &mut self,
+    ) -> Result<(), Error<RST::Error>> {
+        self.reset_panel()?;
 
-        let res_set_data: [u8; 4] = [0x02, 0x58, 0x01, 0xc0];
-        self.send_command(registers::RESOLUTION_SET_REGISTER)
-            .unwrap();
-        self.send_data(&res_set_data).unwrap();
+        while self.busy.is_low().unwrap() {}
 
-        self.send_command(registers::DATA_START_TRANS_REGISTER)
-            .unwrap();
+        self.send_command(registers::PANEL_SET_REGISTER)?;
+        self.send_data(&[0xEF, 0x08])?;
+
+        self.send_command(registers::POWER_SET_REGISTER)?;
+        self.send_data(&[0x37, 0x00, 0x05, 0x05])?;
+
+        self.send_command(registers::POWER_OFF_SEQ_SET_REGISTER)?;
+        self.send_data(&[registers::PANEL_SET_REGISTER])?;
+
+        self.send_command(registers::BOOSTER_SOFTSTART_REGISTER)?;
+        self.send_data(&[0xC7, 0xC7, 0x1D])?;
+
+        self.send_command(registers::TEMP_SENSOR_EN_REGISTER)?;
+        self.send_data(&[registers::PANEL_SET_REGISTER])?;
+
+        self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)?;
+        self.send_data(&[0x37])?;
+
+        self.send_command(0x60)?;
+        self.send_data(&[0x20])?;
+
+        self.send_command(registers::RESOLUTION_SET_REGISTER)?;
+        self.send_data(&[0x02, 0x58, 0x01, 0xC0])?;
+
+        self.send_command(0xE3)?;
+        self.send_data(&[0xAA])?;
+
+        self.delay.delay_ms(100u32);
+        self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)?;
+        self.send_data(&[0x37])?;
+        Ok(())
+    }
+
+    pub fn display(&mut self) -> Result<(), Error<RST::Error>> {
+        self.wakeup()?;
+
+        self.send_command(registers::RESOLUTION_SET_REGISTER)?;
+        self.send_data(&[0x02, 0x58, 0x01, 0xc0])?;
+
+        self.send_command(registers::DATA_START_TRANS_REGISTER)?;
         self.dc.set_high().unwrap();
 
-        self.spi.write(&self.buffer).unwrap();
+        self.spi.write(&self.buffer).map_err(|_| Error::Spi)?;
 
-        self.send_command(registers::POWER_OFF_REGISTER).unwrap();
-        while self.busy.is_low()? {}
+        self.send_command(registers::POWER_OFF_REGISTER)?;
+        while self.busy.is_low().unwrap() {}
 
-        self.send_command(registers::DISPLAY_REF_REGISTER).unwrap();
-        while self.busy.is_low()? {}
+        self.send_command(registers::DISPLAY_REF_REGISTER)?;
+        while self.busy.is_low().unwrap() {}
 
-        self.send_command(registers::POWER_OFF_REGISTER).unwrap();
-        while self.busy.is_high()? {}
+        self.send_command(registers::POWER_OFF_REGISTER)?;
+        while self.busy.is_high().unwrap() {}
 
         self.delay.delay_ms(200u32);
-        self.set_panel_deep_sleep(true).unwrap();
+        self.sleep()?;
         Ok(())
+    }
+
+    pub fn clear(&mut self) {
+        for x in 0..WIDTH {
+            for y in 0..HEIGHT {
+                self.set_pixel(x, y, color::Color::WHITE);
+            }
+        }
     }
 
     pub fn set_pixel(&mut self, x: usize, y: usize, color: color::Color) {
-        let index = ((x >> 1) + y * WIDTH / 2).min(WIDTH * HEIGHT / 2 - 1);
+        assert!(x < WIDTH);
+        assert!(y < HEIGHT);
+
+        let index = (x >> 1) + y * WIDTH / 2;
         let color: u8 = color.into();
+
         if x % 2 == 0 {
-            self.buffer[index] = (self.buffer[index] & 0xf0) | color;
-        } else {
             self.buffer[index] = (self.buffer[index] & 0x0f) | (color << 4);
+        } else {
+            self.buffer[index] = (self.buffer[index] & 0xf0) | color;
         }
     }
 }
