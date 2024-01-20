@@ -10,7 +10,6 @@ dither = { version = "0.1.0", path = "../dither" }
 embedded-graphics-core = { version = "0.4.0", optional = true }
 embedded-hal = "1.0.0"
 embedded-hal-bus = "0.1.0"
-profont = "0.7.0"
 num_enum = { version = "0.7.2", default-features = false }
 
 [dev-dependencies]
@@ -18,6 +17,12 @@ tinybmp = "0.5.0"
 heapless = "0.8.0"
 embedded-graphics = "0.8.1"
 nalgebra = { version = "0.32.3", default-features = false }
+profont = "0.7.0"
+
+[target.'cfg(not(target_os="none"))'.dev-dependencies]
+embedded-hal-mock = { path = "../embedded-hal-mock" }
+
+[target.'cfg(target_os="none")'.dev-dependencies]
 esp-backtrace = { version = "0.10.0", features = ["esp32", "panic-handler", "exception-handler", "print-uart"] }
 esp-println = { version = "0.7.0", features = ["esp32"] }
 hal = { package = "esp32-hal", version = "0.18.0", features = ["eh1"] }
