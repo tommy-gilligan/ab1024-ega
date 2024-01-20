@@ -2,7 +2,7 @@
 #![no_main]
 
 use dither::DitherTarget;
-use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
+use embedded_graphics::{primitives::{Rectangle, PrimitiveStyleBuilder}, pixelcolor::Rgb888, prelude::*};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
 use hal::{
@@ -14,6 +14,7 @@ use hal::{
     Delay,
 };
 use tinybmp::Bmp;
+use embedded_graphics::pixelcolor::WebColors;
 
 #[entry]
 fn main() -> ! {
@@ -40,8 +41,25 @@ fn main() -> ! {
     e.init().unwrap();
 
     let mut ed: DitherTarget<'_, _, { ab1024_ega::WIDTH }, { ab1024_ega::WIDTH + 1 }> = DitherTarget::new(&mut e);
-    bmp.draw(&mut ed).unwrap();
-    e.display().unwrap();
+
+    let colors = [
+        WebColors::CSS_RED,
+        WebColors::CSS_ORANGE,
+        WebColors::CSS_YELLOW,
+        WebColors::CSS_GREEN,
+        WebColors::CSS_BLUE,
+        WebColors::CSS_PURPLE,
+    ];
+    let stripe_width = ab1024_ega::WIDTH / colors.len();
+
+    for (index, color) in colors.into_iter().enumerate() {
+        let style = PrimitiveStyleBuilder::new().fill_color(color).build();
+        Rectangle::with_corners(
+            Point::new((index * stripe_width).try_into().unwrap(), 0),
+            Point::new(ab1024_ega::WIDTH.try_into().unwrap(), ab1024_ega::HEIGHT.try_into().unwrap()),
+        ).into_styled(style).draw(&mut ed).unwrap();
+    }
+        e.display().unwrap();
 
     loop {}
 }
