@@ -193,3 +193,82 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    extern crate std;
+    use super::*;
+    use embedded_hal_mock::eh1::{
+        spi::{
+            Mock as SpiMock,
+            Transaction as SpiTransaction
+        },
+        pin::{
+            Mock as PinMock,
+            State as PinState,
+            Transaction as PinTransaction
+        },
+        top_level::{Hal, Expectation}
+    };
+
+    #[test]
+    fn test_reset_panel() {
+        let mut hal = Hal::new(&[
+          Expectation::Digital(0, PinTransaction::set(PinState::Low)),
+          Expectation::Delay(1_000_000),
+          Expectation::Digital(0, PinTransaction::set(PinState::High)),
+          Expectation::Delay(200_000_000),
+        ]);
+
+        let mut spi = SpiMock::new(&[]);
+        let mut dc = PinMock::new(&[]);
+        let mut busy = PinMock::new(&[]);
+
+        let mut epd = Epd::new(
+            spi.clone(),
+            hal.clone().pin(0),
+            dc.clone(),
+            busy.clone(),
+            hal.clone().delay(),
+        );
+
+        epd.reset_panel().unwrap();
+
+        spi.done();
+        dc.done();
+        busy.done();
+        hal.done();
+    }
+
+    #[test]
+    fn test_sleep_panel() {
+        let dc = 0;
+        let rst = 1;
+        let busy = 2;
+
+        let mut hal = Hal::new(&[
+          Expectation::Delay(10_000_000),
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x07)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0xA5)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Delay(100_000_000),
+          Expectation::Digital(rst, PinTransaction::set(PinState::Low)),
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+        ]);
+
+        Epd::new(
+            hal.clone().spi(),
+            hal.clone().pin(rst),
+            hal.clone().pin(dc),
+            hal.clone().pin(busy),
+            hal.clone().delay()
+        ).sleep().unwrap();
+
+        hal.done();
+    }
+}
