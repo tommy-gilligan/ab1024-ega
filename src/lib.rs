@@ -120,13 +120,13 @@ where
         self.send_data(&[0x37, 0x00, 0x05, 0x05])?;
 
         self.send_command(registers::POWER_OFF_SEQ_SET_REGISTER)?;
-        self.send_data(&[registers::PANEL_SET_REGISTER])?;
+        self.send_data(&[0x00])?;
 
         self.send_command(registers::BOOSTER_SOFTSTART_REGISTER)?;
         self.send_data(&[0xC7, 0xC7, 0x1D])?;
 
         self.send_command(registers::TEMP_SENSOR_EN_REGISTER)?;
-        self.send_data(&[registers::PANEL_SET_REGISTER])?;
+        self.send_data(&[0x00])?;
 
         self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)?;
         self.send_data(&[0x37])?;
@@ -241,6 +241,58 @@ mod test {
     }
 
     #[test]
+    fn test_send_command() {
+        let dc = 0;
+        let rst = 1;
+        let busy = 2;
+
+        let mut hal = Hal::new(&[
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(23)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+        ]);
+
+        let mut epd = Epd::new(
+            hal.clone().spi(),
+            hal.clone().pin(rst),
+            hal.clone().pin(dc),
+            hal.clone().pin(busy),
+            hal.clone().delay()
+        );
+
+        epd.send_command(23).unwrap();
+
+        hal.done();
+    }
+
+    #[test]
+    fn test_send_data() {
+        let dc = 0;
+        let rst = 1;
+        let busy = 2;
+
+        let mut hal = Hal::new(&[
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([20, 45].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+        ]);
+
+        let mut epd = Epd::new(
+            hal.clone().spi(),
+            hal.clone().pin(rst),
+            hal.clone().pin(dc),
+            hal.clone().pin(busy),
+            hal.clone().delay()
+        );
+
+        epd.send_data(&[20, 45]).unwrap();
+
+        hal.done();
+    }
+
+    #[test]
     fn test_sleep_panel() {
         let dc = 0;
         let rst = 1;
@@ -268,6 +320,149 @@ mod test {
             hal.clone().pin(busy),
             hal.clone().delay()
         ).sleep().unwrap();
+
+        hal.done();
+    }
+
+    #[test]
+    fn test_wakeup() {
+        let dc = 0;
+        let rst = 1;
+        let busy = 2;
+
+        let mut hal = Hal::new(&[
+          Expectation::Digital(rst, PinTransaction::set(PinState::Low)),
+          Expectation::Delay(1_000_000),
+          Expectation::Digital(rst, PinTransaction::set(PinState::High)),
+          Expectation::Delay(200_000_000),
+
+          // busy
+          // busy
+          // no longer busy
+          Expectation::Digital(busy, PinTransaction::get(PinState::Low)),
+          Expectation::Digital(busy, PinTransaction::get(PinState::Low)),
+          Expectation::Digital(busy, PinTransaction::get(PinState::High)),
+
+          // self.send_command(registers::PANEL_SET_REGISTER)?;
+          // self.send_data(&[0xEF, 0x08])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x00)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0xEF, 0x08].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(registers::POWER_SET_REGISTER)?;
+          // self.send_data(&[0x37, 0x00, 0x05, 0x05])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x01)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0x37, 0x00, 0x05, 0x05].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(registers::POWER_OFF_SEQ_SET_REGISTER)?;
+          // self.send_data(&[0x00])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x03)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0x00].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(registers::BOOSTER_SOFTSTART_REGISTER)?;
+          // self.send_data(&[0xC7, 0xC7, 0x1D])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x06)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0xC7, 0xC7, 0x1D].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(registers::TEMP_SENSOR_EN_REGISTER)?;
+          // self.send_data(&[0x00])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x41)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0x00].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)?;
+          // self.send_data(&[0x37])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x50)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0x37].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(0x60)?;
+          // self.send_data(&[0x20])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x60)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0x20].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(registers::RESOLUTION_SET_REGISTER)?;
+          // self.send_data(&[0x02, 0x58, 0x01, 0xC0])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x61)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0x02, 0x58, 0x01, 0xC0].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.send_command(0xE3)?;
+          // self.send_data(&[0xAA])?;
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0xE3)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0xAA].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+
+          // self.delay.delay_ms(100u32);
+          // self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)?;
+          // self.send_data(&[0x37])?;
+          Expectation::Delay(100_000_000),
+          Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write(0x50)),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+          Expectation::Digital(dc, PinTransaction::set(PinState::High)),
+          Expectation::Spi(SpiTransaction::transaction_start()),
+          Expectation::Spi(SpiTransaction::write_vec([0x37].to_vec())),
+          Expectation::Spi(SpiTransaction::transaction_end()),
+        ]);
+
+        Epd::new(
+            hal.clone().spi(),
+            hal.clone().pin(rst),
+            hal.clone().pin(dc),
+            hal.clone().pin(busy),
+            hal.clone().delay()
+        ).wakeup().unwrap();
 
         hal.done();
     }
