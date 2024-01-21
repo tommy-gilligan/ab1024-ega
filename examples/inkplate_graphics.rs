@@ -15,7 +15,7 @@ use hal::{
     peripherals::Peripherals,
     prelude::*,
     spi::{master::Spi, SpiMode},
-    Delay,
+    Delay, Rtc,
 };
 use profont::PROFONT_24_POINT;
 
@@ -26,7 +26,7 @@ fn main() -> ! {
     let clocks = ClockControl::max(system.clock_control).freeze();
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let delay = Delay::new(&clocks);
+    let mut delay = Delay::new(&clocks);
     let rst = io.pins.gpio19.into_push_pull_output();
     let dc = io.pins.gpio33.into_push_pull_output();
     let busy = io.pins.gpio32.into_floating_input();
@@ -40,7 +40,7 @@ fn main() -> ! {
     );
 
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
-    e.init();
+    e.init().unwrap();
 
     let text_style = MonoTextStyle::new(&PROFONT_24_POINT, ab1024_ega::color::Color::BLACK);
     Text::new("My favourite colors:", Point::new(24, 48), text_style)
@@ -62,5 +62,6 @@ fn main() -> ! {
 
     e.display().unwrap();
 
-    loop {}
+    let mut rtc = Rtc::new(peripherals.LPWR);
+    rtc.sleep_deep(&[], &mut delay)
 }

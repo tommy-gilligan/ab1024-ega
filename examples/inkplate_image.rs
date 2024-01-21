@@ -11,7 +11,7 @@ use hal::{
     peripherals::Peripherals,
     prelude::*,
     spi::{master::Spi, SpiMode},
-    Delay,
+    Delay, Rtc,
 };
 use tinybmp::Bmp;
 
@@ -22,7 +22,7 @@ fn main() -> ! {
     let clocks = ClockControl::max(system.clock_control).freeze();
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
-    let delay = Delay::new(&clocks);
+    let mut delay = Delay::new(&clocks);
     let rst = io.pins.gpio19.into_push_pull_output();
     let dc = io.pins.gpio33.into_push_pull_output();
     let busy = io.pins.gpio32.into_floating_input();
@@ -44,5 +44,6 @@ fn main() -> ! {
     bmp.draw(&mut ed).unwrap();
     e.display().unwrap();
 
-    loop {}
+    let mut rtc = Rtc::new(peripherals.LPWR);
+    rtc.sleep_deep(&[], &mut delay)
 }
