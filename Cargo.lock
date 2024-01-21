@@ -192,6 +192,7 @@ dependencies = [
 [[package]]
 name = "dither"
 version = "0.1.0"
+source = "git+https://github.com/tommy-gilligan/dither.git#e444d76f8f6fd649d6f0a9b62543675903e74635"
 dependencies = [
  "embedded-graphics-core",
  "nalgebra",
@@ -316,7 +317,7 @@ dependencies = [
 [[package]]
 name = "embedded-hal-mock"
 version = "0.10.0"
-source = "git+https://github.com/tommy-gilligan/embedded-hal-mock.git?branch=top-level#932fc8a88146357a566f8949a9984c258e185b3f"
+source = "git+https://github.com/tommy-gilligan/embedded-hal-mock.git?branch=top-level#5535a395c0b01fe5d02eb162acabf58461413e48"
 dependencies = [
  "embedded-hal 1.0.0",
  "embedded-hal-nb",
@@ -608,9 +609,9 @@ checksum = "c3c8dda44ff03a2f238717214da50f65d5a53b45cd213a7370424ffdb6fae815"
 
 [[package]]
 name = "minijinja"
-version = "1.0.11"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "431d72874542d43aba1ca605870eacab134fdeb0c8fe27666ecf4b2662239df2"
+checksum = "6fe0ff215195a22884d867b547c70a0c4815cbbcc70991f281dca604b20d10ce"
 dependencies = [
  "serde",
 ]
@@ -801,9 +802,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.76"
+version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95fc56cda0b5c3325f5fbbd7ff9fda9e02bb00bb3dac51252d2f1bfa1cb8cc8c"
+checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
 dependencies = [
  "unicode-ident",
 ]
