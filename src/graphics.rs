@@ -1,8 +1,9 @@
 use super::Epd;
+use crate::color::Color;
 use embedded_graphics_core::{
     draw_target::DrawTarget,
-    pixelcolor::{PixelColor, RgbColor, Rgb888, raw::RawU4},
-    prelude::{OriginDimensions, Size, RawData},
+    pixelcolor::{raw::RawU4, PixelColor, Rgb888, RgbColor},
+    prelude::{OriginDimensions, RawData, Size},
     Pixel,
 };
 use embedded_hal::{
@@ -10,7 +11,6 @@ use embedded_hal::{
     digital::{InputPin, OutputPin},
     spi::SpiDevice,
 };
-use crate::color::Color;
 
 impl<D, S, RST, DC, BUSY> OriginDimensions for Epd<D, S, RST, DC, BUSY>
 where
@@ -47,7 +47,7 @@ where
             self.set_pixel(
                 pixel.0.x.try_into().unwrap(),
                 pixel.0.y.try_into().unwrap(),
-                pixel.1.into()
+                pixel.1,
             );
         }
 
@@ -70,9 +70,12 @@ impl From<Rgb888> for Color {
         let (_, display) = RGB_DISPLAY_PAIRS
             .into_iter()
             .min_by_key(|(rgb, _): &(Rgb888, Color)| {
-                let r: u32 = (<u8 as Into<u32>>::into(color.r())).abs_diff(<u8 as Into<u32>>::into(rgb.r()));
-                let g: u32 = (<u8 as Into<u32>>::into(color.g())).abs_diff(<u8 as Into<u32>>::into(rgb.g()));
-                let b: u32 = (<u8 as Into<u32>>::into(color.b())).abs_diff(<u8 as Into<u32>>::into(rgb.b()));
+                let r: u32 =
+                    (<u8 as Into<u32>>::into(color.r())).abs_diff(<u8 as Into<u32>>::into(rgb.r()));
+                let g: u32 =
+                    (<u8 as Into<u32>>::into(color.g())).abs_diff(<u8 as Into<u32>>::into(rgb.g()));
+                let b: u32 =
+                    (<u8 as Into<u32>>::into(color.b())).abs_diff(<u8 as Into<u32>>::into(rgb.b()));
                 r * r + g * g + b * b
             })
             .unwrap();

@@ -2,7 +2,12 @@
 #![no_main]
 
 use dither::DitherTarget;
-use embedded_graphics::{primitives::{Rectangle, PrimitiveStyleBuilder}, pixelcolor::Rgb888, prelude::*};
+use embedded_graphics::pixelcolor::WebColors;
+use embedded_graphics::{
+    pixelcolor::Rgb888,
+    prelude::*,
+    primitives::{PrimitiveStyleBuilder, Rectangle},
+};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
 use hal::{
@@ -14,7 +19,6 @@ use hal::{
     Delay,
 };
 use tinybmp::Bmp;
-use embedded_graphics::pixelcolor::WebColors;
 
 #[entry]
 fn main() -> ! {
@@ -36,11 +40,12 @@ fn main() -> ! {
         cs,
     );
 
-    let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
+    let _bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
     e.init().unwrap();
 
-    let mut ed: DitherTarget<'_, _, { ab1024_ega::WIDTH }, { ab1024_ega::WIDTH + 1 }> = DitherTarget::new(&mut e);
+    let mut ed: DitherTarget<'_, _, { ab1024_ega::WIDTH }, { ab1024_ega::WIDTH + 1 }> =
+        DitherTarget::new(&mut e);
 
     let colors = [
         WebColors::CSS_RED,
@@ -56,10 +61,16 @@ fn main() -> ! {
         let style = PrimitiveStyleBuilder::new().fill_color(color).build();
         Rectangle::with_corners(
             Point::new((index * stripe_width).try_into().unwrap(), 0),
-            Point::new(ab1024_ega::WIDTH.try_into().unwrap(), ab1024_ega::HEIGHT.try_into().unwrap()),
-        ).into_styled(style).draw(&mut ed).unwrap();
+            Point::new(
+                ab1024_ega::WIDTH.try_into().unwrap(),
+                ab1024_ega::HEIGHT.try_into().unwrap(),
+            ),
+        )
+        .into_styled(style)
+        .draw(&mut ed)
+        .unwrap();
     }
-        e.display().unwrap();
+    e.display().unwrap();
 
     loop {}
 }

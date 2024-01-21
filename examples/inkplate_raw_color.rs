@@ -1,6 +1,11 @@
 #![no_std]
 #![no_main]
 
+use embedded_graphics::{
+    image::{Image, ImageRaw},
+    prelude::Point,
+    Drawable,
+};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
 use hal::{
@@ -10,11 +15,6 @@ use hal::{
     prelude::*,
     spi::{master::Spi, SpiMode},
     Delay,
-};
-use embedded_graphics::{
-    image::{ImageRaw, Image},
-    prelude::Point,
-    Drawable
 };
 
 #[entry]
@@ -41,26 +41,9 @@ fn main() -> ! {
     e.init().unwrap();
 
     const IMAGE_DATA: &[u8] = &[
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
-        0b00110011,
+        0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011,
+        0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011,
+        0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011,
     ];
     let image_raw: ImageRaw<ab1024_ega::color::Color> = ImageRaw::new(IMAGE_DATA, 8);
     let image = Image::new(&image_raw, Point::new(0, 0));

@@ -42,7 +42,6 @@ fn main() -> ! {
     let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
     e.init();
 
-
     let text_style = MonoTextStyle::new(&PROFONT_24_POINT, ab1024_ega::color::Color::BLACK);
     Text::new("My favourite colors:", Point::new(24, 48), text_style)
         .draw(&mut e)
