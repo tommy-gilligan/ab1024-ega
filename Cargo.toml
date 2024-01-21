@@ -17,14 +17,16 @@ embedded-graphics = "0.8.1"
 nalgebra = { version = "0.32.3", default-features = false }
 profont = "0.7.0"
 
+# test
 [target.'cfg(not(target_os="none"))'.dev-dependencies]
 embedded-hal-mock = { git = "https://github.com/tommy-gilligan/embedded-hal-mock.git", branch = "top-level" }
 
+# examples
 [target.'cfg(target_os="none")'.dev-dependencies]
 esp-backtrace = { version = "0.10.0", features = ["esp32", "panic-handler", "exception-handler", "print-uart"] }
 esp-println = { version = "0.7.0", features = ["esp32"] }
 hal = { package = "esp32-hal", version = "0.18.0", features = ["eh1"] }
-dither = { version = "0.1.0", path = "../dither" }
+dither = { git = "https://github.com/tommy-gilligan/dither.git" }
 embedded-hal-bus = "0.1.0"
 
 [features]
