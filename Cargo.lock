@@ -440,6 +440,7 @@ dependencies = [
 [[package]]
 name = "embedded-hal-mock"
 version = "0.10.0"
+source = "git+https://github.com/tommy-gilligan/embedded-hal-mock.git?branch=top-level#932fc8a88146357a566f8949a9984c258e185b3f"
 dependencies = [
  "embedded-hal 1.0.0",
  "embedded-hal-nb",

@@ -1,12 +1,9 @@
 [target.xtensa-esp32-none-elf]
 runner = "espflash flash --monitor"
-
-[build]
 rustflags = [
   "-C", "link-arg=-Tlinkall.x",
   "-C", "link-arg=-nostartfiles",
 ]
-target = "xtensa-esp32-none-elf"
 
-[unstable]
-build-std = ["core"]
+[alias]
+re = "run --release --target xtensa-esp32-none-elf -Z build-std=core --example "
