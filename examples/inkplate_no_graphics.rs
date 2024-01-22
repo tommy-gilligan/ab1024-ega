@@ -48,7 +48,7 @@ fn main() -> ! {
         ab1024_ega::color::Color::YELLOW,
         ab1024_ega::color::Color::ORANGE,
     ];
-    let mut display = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
+    let mut display = ab1024_ega::Display::new(spi, rst, dc, busy, delay);
     for (index, color) in colors.into_iter().enumerate() {
         for x in (index * ab1024_ega::WIDTH / colors.len())..ab1024_ega::WIDTH {
             for y in 0..ab1024_ega::HEIGHT {

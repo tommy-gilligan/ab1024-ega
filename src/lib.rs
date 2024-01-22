@@ -21,7 +21,7 @@ use error::Error;
 pub const WIDTH: usize = 600;
 pub const HEIGHT: usize = 448;
 
-pub struct Epd<D, S, RST, DC, BUSY>
+pub struct Display<D, S, RST, DC, BUSY>
 where
     D: DelayNs,
     S: SpiDevice,
@@ -37,7 +37,7 @@ where
     buffer: [u8; (WIDTH * HEIGHT) / 2],
 }
 
-impl<D, S, RST, DC, BUSY> Epd<D, S, RST, DC, BUSY>
+impl<D, S, RST, DC, BUSY> Display<D, S, RST, DC, BUSY>
 where
     D: DelayNs,
     S: SpiDevice,

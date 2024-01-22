@@ -19,7 +19,7 @@ fn test_reset_panel() {
     let mut dc = PinMock::new(&[]);
     let mut busy = PinMock::new(&[]);
 
-    let mut epd = Epd::new(
+    let mut epd = Display::new(
         spi.clone(),
         hal.clone().pin(0),
         dc.clone(),
@@ -48,7 +48,7 @@ fn test_send_command() {
         Expectation::Spi(SpiTransaction::transaction_end()),
     ]);
 
-    let mut epd = Epd::new(
+    let mut epd = Display::new(
         hal.clone().spi(),
         hal.clone().pin(rst),
         hal.clone().pin(dc),
@@ -74,7 +74,7 @@ fn test_send_data() {
         Expectation::Spi(SpiTransaction::transaction_end()),
     ]);
 
-    let mut epd = Epd::new(
+    let mut epd = Display::new(
         hal.clone().spi(),
         hal.clone().pin(rst),
         hal.clone().pin(dc),
@@ -108,7 +108,7 @@ fn test_sleep_panel() {
         Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
     ]);
 
-    Epd::new(
+    Display::new(
         hal.clone().spi(),
         hal.clone().pin(rst),
         hal.clone().pin(dc),
@@ -242,7 +242,7 @@ fn test_wakeup() {
         Expectation::Spi(SpiTransaction::transaction_end()),
     ]);
 
-    Epd::new(
+    Display::new(
         hal.clone().spi(),
         hal.clone().pin(rst),
         hal.clone().pin(dc),
@@ -390,7 +390,7 @@ fn test_init() {
         Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
     ]);
 
-    Epd::new(
+    Display::new(
         hal.clone().spi(),
         hal.clone().pin(rst),
         hal.clone().pin(dc),
@@ -576,7 +576,7 @@ fn test_display() {
         Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
     ]);
 
-    Epd::new(
+    Display::new(
         hal.clone().spi(),
         hal.clone().pin(rst),
         hal.clone().pin(dc),
@@ -597,7 +597,7 @@ fn test_clear() {
     let mut dc = PinMock::new(&[]);
     let mut busy = PinMock::new(&[]);
 
-    let mut epd = Epd::new(
+    let mut epd = Display::new(
         spi.clone(),
         hal.clone().pin(0),
         dc.clone(),
@@ -624,7 +624,7 @@ fn test_set_pixel() {
     let mut dc = PinMock::new(&[]);
     let mut busy = PinMock::new(&[]);
 
-    let mut epd = Epd::new(
+    let mut epd = Display::new(
         spi.clone(),
         hal.clone().pin(0),
         dc.clone(),

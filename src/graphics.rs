@@ -1,4 +1,4 @@
-use super::Epd;
+use super::Display;
 use crate::color::Color;
 use embedded_graphics_core::{
     draw_target::DrawTarget,
@@ -12,7 +12,7 @@ use embedded_hal::{
     spi::SpiDevice,
 };
 
-impl<D, S, RST, DC, BUSY> OriginDimensions for Epd<D, S, RST, DC, BUSY>
+impl<D, S, RST, DC, BUSY> OriginDimensions for Display<D, S, RST, DC, BUSY>
 where
     D: DelayNs,
     S: SpiDevice,
@@ -27,7 +27,7 @@ where
         )
     }
 }
-impl<D, S, RST, DC, BUSY> DrawTarget for Epd<D, S, RST, DC, BUSY>
+impl<D, S, RST, DC, BUSY> DrawTarget for Display<D, S, RST, DC, BUSY>
 where
     D: DelayNs,
     S: SpiDevice,

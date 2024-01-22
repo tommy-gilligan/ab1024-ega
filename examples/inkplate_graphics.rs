@@ -44,7 +44,7 @@ fn main() -> ! {
         cs,
     );
 
-    let mut display = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
+    let mut display = ab1024_ega::Display::new(spi, rst, dc, busy, delay);
 
     Circle::with_center(Point::new(150, 224), 200)
         .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::RED))
