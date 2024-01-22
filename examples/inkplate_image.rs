@@ -3,6 +3,11 @@
 
 //! This example demonstrates using the driver with a dither to approximate a display that can
 //! render Rgb888 at each pixel.
+//!
+//! ![Inkplate displaying a dithered version of Vincent van Gogh's The Starry Night][photo]
+//!
+#![doc = ::embed_doc_image::embed_image!("photo", "examples/image_photo.jpg")]
+//!
 
 use dither::DitherTarget;
 use embedded_graphics::{pixelcolor::Rgb888, prelude::*};

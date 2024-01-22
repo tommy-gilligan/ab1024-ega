@@ -2,6 +2,11 @@
 #![no_main]
 
 //! This example demonstrates using the driver without embedded-graphics
+//!
+//! ![Inkplate displaying a solid rectangle for each color in AB1024-EGA palette.  The rectangles are black, white, green, blue, red, yellow and orange.][no_graphics]
+//!
+#![doc = ::embed_doc_image::embed_image!("no_graphics", "examples/no_graphics_photo.jpg")]
+//!
 
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;

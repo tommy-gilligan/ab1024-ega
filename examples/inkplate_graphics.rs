@@ -2,6 +2,12 @@
 #![no_main]
 
 //! This example demonstrates drawing a few embedded-graphics primitives
+//!
+//! ![Inkplate displaying 3 circles in a row.  The last circle in the row is blue and overlaps a
+//! preceding yellow circle.  The yellow circle overlaps a preceding red circle.][graphics]
+//!
+#![doc = ::embed_doc_image::embed_image!("graphics", "examples/graphics_photo.jpg")]
+//!
 
 use embedded_graphics::{
     prelude::*,
