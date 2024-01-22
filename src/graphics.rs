@@ -1,5 +1,9 @@
-use super::Display;
-use crate::color::Color;
+use crate::{
+    Display,
+    color::Color,
+    WIDTH,
+    HEIGHT
+};
 use embedded_graphics_core::{
     draw_target::DrawTarget,
     pixelcolor::{raw::RawU4, PixelColor, Rgb888, RgbColor},
@@ -22,8 +26,8 @@ where
 {
     fn size(&self) -> Size {
         Size::new(
-            super::WIDTH.try_into().unwrap(),
-            super::HEIGHT.try_into().unwrap(),
+            WIDTH.try_into().unwrap(),
+            HEIGHT.try_into().unwrap(),
         )
     }
 }
@@ -35,8 +39,8 @@ where
     DC: OutputPin,
     BUSY: InputPin,
 {
-    type Color = super::color::Color;
-    type Error = super::error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>;
+    type Color = Color;
+    type Error = crate::error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>;
 
     fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
     where
@@ -54,7 +58,7 @@ where
     }
 }
 
-impl PixelColor for super::color::Color {
+impl PixelColor for Color {
     type Raw = RawU4;
 }
 
