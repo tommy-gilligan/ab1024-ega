@@ -1,4 +1,6 @@
 #![no_std]
+#![doc = ::embed_doc_image::embed_image!("image-photo", "examples/image_photo.jpg")]
+#![doc = include_str!("../README.md")]
 
 pub mod color;
 pub mod error;
