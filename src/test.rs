@@ -576,13 +576,15 @@ fn test_display() {
         Expectation::Digital(dc, PinTransaction::set(PinState::Low)),
     ]);
 
-    Display::new(
-        hal.clone().spi(),
-        hal.clone().pin(rst),
-        hal.clone().pin(dc),
-        hal.clone().pin(busy),
-        hal.clone().delay(),
-    )
+    Display {
+        spi: hal.clone().spi(),
+        rst: hal.clone().pin(rst),
+        dc: hal.clone().pin(dc),
+        busy: hal.clone().pin(busy),
+        delay: hal.clone().delay(),
+        buffer: [0b0001_0001; (WIDTH * HEIGHT) / 2],
+        state: core::marker::PhantomData,
+    }
     .display()
     .unwrap();
 

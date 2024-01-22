@@ -1,9 +1,4 @@
-use crate::{
-    Display,
-    color::Color,
-    WIDTH,
-    HEIGHT
-};
+use crate::{color::Color, Display, HEIGHT, WIDTH};
 use embedded_graphics_core::{
     draw_target::DrawTarget,
     pixelcolor::{raw::RawU4, PixelColor, Rgb888, RgbColor},
@@ -16,7 +11,7 @@ use embedded_hal::{
     spi::SpiDevice,
 };
 
-impl<D, S, RST, DC, BUSY> OriginDimensions for Display<D, S, RST, DC, BUSY>
+impl<D, S, RST, DC, BUSY, St: super::State> OriginDimensions for Display<D, S, RST, DC, BUSY, St>
 where
     D: DelayNs,
     S: SpiDevice,
@@ -25,13 +20,10 @@ where
     BUSY: InputPin,
 {
     fn size(&self) -> Size {
-        Size::new(
-            WIDTH.try_into().unwrap(),
-            HEIGHT.try_into().unwrap(),
-        )
+        Size::new(WIDTH.try_into().unwrap(), HEIGHT.try_into().unwrap())
     }
 }
-impl<D, S, RST, DC, BUSY> DrawTarget for Display<D, S, RST, DC, BUSY>
+impl<D, S, RST, DC, BUSY, St: super::State> DrawTarget for Display<D, S, RST, DC, BUSY, St>
 where
     D: DelayNs,
     S: SpiDevice,

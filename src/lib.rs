@@ -5,6 +5,7 @@
 pub mod color;
 pub mod error;
 mod registers;
+mod util;
 
 #[cfg(feature = "graphics")]
 mod graphics;
@@ -17,10 +18,19 @@ use embedded_hal::{
     spi::SpiDevice,
 };
 
+use util::Sealed;
+pub trait State: Sealed {}
+pub enum Uninitialized {}
+pub enum Initialized {}
+impl State for Uninitialized {}
+impl State for Initialized {}
+impl Sealed for Uninitialized {}
+impl Sealed for Initialized {}
+
 pub const WIDTH: usize = 600;
 pub const HEIGHT: usize = 448;
 
-pub struct Display<D, S, RST, DC, BUSY>
+pub struct Display<D, S, RST, DC, BUSY, St: State>
 where
     D: DelayNs,
     S: SpiDevice,
@@ -34,9 +44,10 @@ where
     busy: BUSY,
     delay: D,
     buffer: [u8; (WIDTH * HEIGHT) / 2],
+    state: core::marker::PhantomData<St>,
 }
 
-impl<D, S, RST, DC, BUSY> Display<D, S, RST, DC, BUSY>
+impl<D, S, RST, DC, BUSY> Display<D, S, RST, DC, BUSY, Uninitialized>
 where
     D: DelayNs,
     S: SpiDevice,
@@ -52,17 +63,44 @@ where
             busy,
             delay,
             buffer: [0b0001_0001; (WIDTH * HEIGHT) / 2],
+            state: core::marker::PhantomData,
         }
     }
 
     /// # Errors
-    pub fn init(&mut self) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
+    pub fn init(
+        mut self,
+    ) -> Result<
+        Display<D, S, RST, DC, BUSY, Initialized>,
+        error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>,
+    > {
         self.wakeup()?;
-        self.sleep()
-    }
+        self.sleep()?;
 
+        Ok(Display {
+            spi: self.spi,
+            rst: self.rst,
+            dc: self.dc,
+            busy: self.busy,
+            delay: self.delay,
+            buffer: self.buffer,
+            state: core::marker::PhantomData,
+        })
+    }
+}
+
+impl<D, S, RST, DC, BUSY> Display<D, S, RST, DC, BUSY, Initialized>
+where
+    D: DelayNs,
+    S: SpiDevice,
+    RST: OutputPin,
+    DC: OutputPin,
+    BUSY: InputPin,
+{
     /// # Errors
-    pub fn display(&mut self) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
+    pub fn display(
+        &mut self,
+    ) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.wakeup()?;
 
         self.send_command(registers::RESOLUTION_SET_REGISTER)?;
@@ -85,9 +123,20 @@ where
         self.delay.delay_ms(200u32);
         self.sleep()
     }
+}
 
+impl<D, S, RST, DC, BUSY, St: State> Display<D, S, RST, DC, BUSY, St>
+where
+    D: DelayNs,
+    S: SpiDevice,
+    RST: OutputPin,
+    DC: OutputPin,
+    BUSY: InputPin,
+{
     /// # Errors
-    pub fn clear(&mut self) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
+    pub fn clear(
+        &mut self,
+    ) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         for x in 0..WIDTH {
             for y in 0..HEIGHT {
                 self.set_pixel(x, y, color::Color::WHITE)?;
@@ -117,7 +166,9 @@ where
         }
     }
 
-    fn reset_panel(&mut self) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
+    fn reset_panel(
+        &mut self,
+    ) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.rst.set_low().map_err(error::Error::ResetPin)?;
         self.delay.delay_ms(1u32);
         self.rst.set_high().map_err(error::Error::ResetPin)?;
