@@ -40,9 +40,4 @@ can be summarised as:
 2. Get espup to do environment setup `espup install`
 3. Source environment init file on non-Windows OS. `. $HOME/export-esp.sh`
 
-## TODO
-- Eliminate panics in driver.  Replace unwrap with proper errors.
-- Document
-- Test
-
 [image-photo]: examples/image_photo.jpg
