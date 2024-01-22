@@ -2,6 +2,9 @@
 
 An `embedded-hal` SPI driver for AB1024-EGA (as used in Inkplate 6 COLOR).
 
+AFAIK there is no way to send partial updates to AB1024-EGA.  Thus, this driver
+allocates a ~130kb buffer for pixel data.
+
 Included examples assume Inkplate 6 COLOR but the driver itself should be
 usable with AB1024-EGA displays connected to other hardware.  This driver is
 heavily based on the [Soldered Inkplate Arduino

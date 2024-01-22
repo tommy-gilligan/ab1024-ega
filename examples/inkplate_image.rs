@@ -1,6 +1,9 @@
 #![no_std]
 #![no_main]
 
+//! This example demonstrates using the driver with a dither to approximate a display that can
+//! render Rgb888 at each pixel.
+
 use dither::DitherTarget;
 use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 use embedded_hal_bus::spi::ExclusiveDevice;
@@ -36,14 +39,14 @@ fn main() -> ! {
     );
 
     let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
-    let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
-    e.init().unwrap();
+    let mut display = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
 
     let mut ed: DitherTarget<'_, _, { ab1024_ega::WIDTH }, { ab1024_ega::WIDTH + 1 }> =
-        DitherTarget::new(&mut e);
+        DitherTarget::new(&mut display);
     bmp.draw(&mut ed).unwrap();
-    e.display().unwrap();
 
-    let mut rtc = Rtc::new(peripherals.LPWR);
-    rtc.sleep_deep(&[], &mut delay)
+    display.init().unwrap();
+    display.display().unwrap();
+
+    Rtc::new(peripherals.LPWR).sleep_deep(&[], &mut delay)
 }

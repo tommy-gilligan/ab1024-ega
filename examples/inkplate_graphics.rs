@@ -1,11 +1,11 @@
 #![no_std]
 #![no_main]
 
+//! This example demonstrates drawing a few embedded-graphics primitives
+
 use embedded_graphics::{
-    mono_font::MonoTextStyle,
     prelude::*,
     primitives::{Circle, PrimitiveStyle},
-    text::Text,
 };
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
@@ -17,7 +17,6 @@ use hal::{
     spi::{master::Spi, SpiMode},
     Delay, Rtc,
 };
-use profont::PROFONT_24_POINT;
 
 #[entry]
 fn main() -> ! {
@@ -39,29 +38,23 @@ fn main() -> ! {
         cs,
     );
 
-    let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
-    e.init().unwrap();
-
-    let text_style = MonoTextStyle::new(&PROFONT_24_POINT, ab1024_ega::color::Color::BLACK);
-    Text::new("My favourite colors:", Point::new(24, 48), text_style)
-        .draw(&mut e)
-        .unwrap();
+    let mut display = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
 
     Circle::with_center(Point::new(150, 224), 200)
         .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::RED))
-        .draw(&mut e)
+        .draw(&mut display)
         .unwrap();
     Circle::with_center(Point::new(300, 224), 200)
         .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::YELLOW))
-        .draw(&mut e)
+        .draw(&mut display)
         .unwrap();
     Circle::with_center(Point::new(450, 224), 200)
         .into_styled(PrimitiveStyle::with_fill(ab1024_ega::color::Color::BLUE))
-        .draw(&mut e)
+        .draw(&mut display)
         .unwrap();
 
-    e.display().unwrap();
+    display.init().unwrap();
+    display.display().unwrap();
 
-    let mut rtc = Rtc::new(peripherals.LPWR);
-    rtc.sleep_deep(&[], &mut delay)
+    Rtc::new(peripherals.LPWR).sleep_deep(&[], &mut delay)
 }

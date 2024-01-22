@@ -1,11 +1,8 @@
 #![no_std]
 #![no_main]
 
-use embedded_graphics::{
-    image::{Image, ImageRaw},
-    prelude::Point,
-    Drawable,
-};
+//! This example demonstrates using the driver without embedded-graphics
+
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
 use hal::{
@@ -37,19 +34,26 @@ fn main() -> ! {
         cs,
     );
 
-    let mut e = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
-    e.init().unwrap();
-
-    const IMAGE_DATA: &[u8] = &[
-        0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011,
-        0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011,
-        0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011,
+    let colors = [
+        ab1024_ega::color::Color::BLACK,
+        ab1024_ega::color::Color::WHITE,
+        ab1024_ega::color::Color::GREEN,
+        ab1024_ega::color::Color::BLUE,
+        ab1024_ega::color::Color::RED,
+        ab1024_ega::color::Color::YELLOW,
+        ab1024_ega::color::Color::ORANGE,
     ];
-    let image_raw: ImageRaw<ab1024_ega::color::Color> = ImageRaw::new(IMAGE_DATA, 8);
-    let image = Image::new(&image_raw, Point::new(0, 0));
-    image.draw(&mut e).unwrap();
-    e.display().unwrap();
+    let mut display = ab1024_ega::Epd::new(spi, rst, dc, busy, delay);
+    for (index, color) in colors.into_iter().enumerate() {
+        for x in (index * ab1024_ega::WIDTH / colors.len())..ab1024_ega::WIDTH {
+            for y in 0..ab1024_ega::HEIGHT {
+                display.set_pixel(x, y, color);
+            }
+        }
+    }
 
-    let mut rtc = Rtc::new(peripherals.LPWR);
-    rtc.sleep_deep(&[], &mut delay)
+    display.init().unwrap();
+    display.display().unwrap();
+
+    Rtc::new(peripherals.LPWR).sleep_deep(&[], &mut delay)
 }
