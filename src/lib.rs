@@ -52,7 +52,7 @@ where
             dc,
             busy,
             delay,
-            buffer: [0b00010001; (WIDTH * HEIGHT) / 2],
+            buffer: [0b0001_0001; (WIDTH * HEIGHT) / 2],
         }
     }
 
@@ -69,8 +69,7 @@ where
         command: u8,
     ) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.dc.set_low().map_err(Error::DataCommandPin)?;
-        self.spi.write(&[command]).map_err(Error::Spi)?;
-        Ok(())
+        self.spi.write(&[command]).map_err(Error::Spi)
     }
 
     fn send_data(
@@ -78,14 +77,13 @@ where
         data: &[u8],
     ) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.dc.set_high().map_err(Error::DataCommandPin)?;
-        self.spi.write(data).map_err(Error::Spi)?;
-        Ok(())
+        self.spi.write(data).map_err(Error::Spi)
     }
 
+    /// # Errors
     pub fn init(&mut self) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.wakeup()?;
-        self.sleep()?;
-        Ok(())
+        self.sleep()
     }
 
     fn sleep(&mut self) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
@@ -94,8 +92,7 @@ where
         self.send_data(&[0xA5])?;
         self.delay.delay_ms(100u32);
         self.rst.set_low().map_err(Error::ResetPin)?;
-        self.dc.set_low().map_err(Error::DataCommandPin)?;
-        Ok(())
+        self.dc.set_low().map_err(Error::DataCommandPin)
     }
 
     fn wakeup(&mut self) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
@@ -132,10 +129,10 @@ where
 
         self.delay.delay_ms(100u32);
         self.send_command(registers::VCOM_DATA_INTERVAL_REGISTER)?;
-        self.send_data(&[0x37])?;
-        Ok(())
+        self.send_data(&[0x37])
     }
 
+    /// # Errors
     pub fn display(&mut self) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.wakeup()?;
 
@@ -157,29 +154,37 @@ where
         while self.busy.is_high().map_err(Error::BusyPin)? {}
 
         self.delay.delay_ms(200u32);
-        self.sleep()?;
+        self.sleep()
+    }
+
+    /// # Errors
+    pub fn clear(&mut self) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
+        for x in 0..WIDTH {
+            for y in 0..HEIGHT {
+                self.set_pixel(x, y, color::Color::WHITE)?;
+            }
+        }
         Ok(())
     }
 
-    pub fn clear(&mut self) {
-        for x in 0..WIDTH {
-            for y in 0..HEIGHT {
-                self.set_pixel(x, y, color::Color::WHITE);
-            }
-        }
-    }
-
-    pub fn set_pixel(&mut self, x: usize, y: usize, color: color::Color) {
-        assert!(x < WIDTH);
-        assert!(y < HEIGHT);
-
-        let index = (x >> 1) + y * WIDTH / 2;
+    /// # Errors
+    pub fn set_pixel(
+        &mut self,
+        x: usize,
+        y: usize,
+        color: color::Color,
+    ) -> Result<(), Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         let color: u8 = color.into();
 
-        if x % 2 == 0 {
-            self.buffer[index] = (self.buffer[index] & 0x0f) | (color << 4);
+        if let Some(byte) = self.buffer.get_mut((x >> 1) + y * WIDTH / 2) {
+            if x % 2 == 0 {
+                *byte = (*byte & 0x0f) | (color << 4);
+            } else {
+                *byte = (*byte & 0xf0) | color;
+            }
+            Ok(())
         } else {
-            self.buffer[index] = (self.buffer[index] & 0xf0) | color;
+            Err(Error::PixelOutOfBounds)
         }
     }
 }

@@ -27,7 +27,6 @@ where
         )
     }
 }
-
 impl<D, S, RST, DC, BUSY> DrawTarget for Epd<D, S, RST, DC, BUSY>
 where
     D: DelayNs,
@@ -37,7 +36,7 @@ where
     BUSY: InputPin,
 {
     type Color = super::color::Color;
-    type Error = core::convert::Infallible;
+    type Error = super::error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>;
 
     fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
     where
@@ -48,7 +47,7 @@ where
                 pixel.0.x.try_into().unwrap(),
                 pixel.0.y.try_into().unwrap(),
                 pixel.1,
-            );
+            )?;
         }
 
         Ok(())

@@ -10,4 +10,5 @@ where
     DataCommandPin(DC),
     ResetPin(RST),
     Spi(S),
+    PixelOutOfBounds,
 }

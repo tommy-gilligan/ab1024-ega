@@ -607,7 +607,7 @@ fn test_clear() {
 
     epd.buffer = [0xff; super::WIDTH * super::HEIGHT / 2];
     assert_eq!(epd.buffer, [0xff; super::WIDTH * super::HEIGHT / 2]);
-    epd.clear();
+    epd.clear().unwrap();
     assert_eq!(epd.buffer, [0b00010001; super::WIDTH * super::HEIGHT / 2]);
 
     spi.done();
@@ -633,13 +633,13 @@ fn test_set_pixel() {
     );
 
     assert_eq!(epd.buffer, [0b00010001; super::WIDTH * super::HEIGHT / 2]);
-    epd.set_pixel(0, 0, super::color::Color::BLACK);
-    epd.set_pixel(1, 0, super::color::Color::WHITE);
-    epd.set_pixel(2, 0, super::color::Color::GREEN);
-    epd.set_pixel(3, 0, super::color::Color::BLUE);
-    epd.set_pixel(4, 0, super::color::Color::RED);
-    epd.set_pixel(5, 0, super::color::Color::YELLOW);
-    epd.set_pixel(6, 0, super::color::Color::ORANGE);
+    epd.set_pixel(0, 0, super::color::Color::BLACK).unwrap();
+    epd.set_pixel(1, 0, super::color::Color::WHITE).unwrap();
+    epd.set_pixel(2, 0, super::color::Color::GREEN).unwrap();
+    epd.set_pixel(3, 0, super::color::Color::BLUE).unwrap();
+    epd.set_pixel(4, 0, super::color::Color::RED).unwrap();
+    epd.set_pixel(5, 0, super::color::Color::YELLOW).unwrap();
+    epd.set_pixel(6, 0, super::color::Color::ORANGE).unwrap();
     assert_eq!(
         epd.buffer[0..4],
         [0b00000001, 0b00100011, 0b01000101, 0b01100001]

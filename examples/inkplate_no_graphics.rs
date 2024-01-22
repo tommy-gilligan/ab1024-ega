@@ -52,7 +52,7 @@ fn main() -> ! {
     for (index, color) in colors.into_iter().enumerate() {
         for x in (index * ab1024_ega::WIDTH / colors.len())..ab1024_ega::WIDTH {
             for y in 0..ab1024_ega::HEIGHT {
-                display.set_pixel(x, y, color);
+                display.set_pixel(x, y, color).unwrap();
             }
         }
     }
