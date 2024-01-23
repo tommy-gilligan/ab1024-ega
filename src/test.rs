@@ -19,13 +19,7 @@ fn test_reset_panel() {
         delay.expect_delay_ns(200_000_000),
     ]);
 
-    let mut epd = Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay
-    );
+    let mut epd = Display::new(spi, rst, dc, busy, delay);
 
     epd.reset_panel().unwrap();
     hal.done();
@@ -48,13 +42,7 @@ fn test_send_command() {
         spi.expect_transaction_end(),
     ]);
 
-    let mut epd = Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay,
-    );
+    let mut epd = Display::new(spi, rst, dc, busy, delay);
 
     epd.send_command(23).unwrap();
 
@@ -78,13 +66,7 @@ fn test_send_data() {
         spi.expect_transaction_end(),
     ]);
 
-    let mut epd = Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay,
-    );
+    let mut epd = Display::new(spi, rst, dc, busy, delay);
 
     epd.send_data(&[20, 45]).unwrap();
 
@@ -116,15 +98,7 @@ fn test_sleep_panel() {
         dc.expect_set(PinState::Low),
     ]);
 
-    Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay,
-    )
-    .sleep()
-    .unwrap();
+    Display::new(spi, rst, dc, busy, delay).sleep().unwrap();
 
     hal.done();
 }
@@ -254,15 +228,7 @@ fn test_wakeup() {
         spi.expect_transaction_end(),
     ]);
 
-    Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay
-    )
-    .wakeup()
-    .unwrap();
+    Display::new(spi, rst, dc, busy, delay).wakeup().unwrap();
 
     hal.done();
 }
@@ -406,15 +372,7 @@ fn test_init() {
         dc.expect_set(PinState::Low),
     ]);
 
-    Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay
-    )
-    .init()
-    .unwrap();
+    Display::new(spi, rst, dc, busy, delay).init().unwrap();
 
     hal.done();
 }
@@ -619,13 +577,7 @@ fn test_clear() {
     let busy = hal.clone().pin();
     let delay = hal.clone().delay();
 
-    let mut epd = Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay
-    );
+    let mut epd = Display::new(spi, rst, dc, busy, delay);
 
     epd.buffer = [0xff; super::WIDTH * super::HEIGHT / 2];
     assert_eq!(epd.buffer, [0xff; super::WIDTH * super::HEIGHT / 2]);
@@ -645,13 +597,7 @@ fn test_set_pixel() {
     let busy = hal.clone().pin();
     let delay = hal.clone().delay();
 
-    let mut epd = Display::new(
-        spi,
-        rst,
-        dc,
-        busy,
-        delay,
-    );
+    let mut epd = Display::new(spi, rst, dc, busy, delay);
 
     assert_eq!(epd.buffer, [0b00010001; super::WIDTH * super::HEIGHT / 2]);
     epd.set_pixel(0, 0, super::color::Color::BLACK).unwrap();
