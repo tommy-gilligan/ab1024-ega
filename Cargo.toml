@@ -4,7 +4,11 @@ version = "0.1.0"
 authors = ["Tommy G <7865781+tommy-gilligan@users.noreply.github.com>"]
 edition = "2021"
 license = "LGPL-3.0-or-later"
-description = "An embedded-hal SPI driver for AB1024-EGA (as used in Inkplate 6 COLOR)"
+description = "An embedded-hal SPI driver for AB1024-EGA/AC057TC1 (as used in Inkplate 6 COLOR)"
+repository = "https://github.com/tommy-gilligan/ab1024-ega"
+homepage = "https://github.com/tommy-gilligan/ab1024-ega"
+keywords = ["ab1024-ega", "ac057tc1", "inkplate", "embedded-graphics", "driver"]
+categories = ["embedded", "no-std", "hardware-support"]
 
 [dependencies]
 embed-doc-image = "0.1.4"
