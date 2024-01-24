@@ -55,6 +55,8 @@ where
     DC: OutputPin,
     BUSY: InputPin,
 {
+    /// Creates a new uninitialized [`Display`].  [`Display::init`] must be called prior to
+    /// [`Display::display`].
     pub fn new(spi: S, rst: RST, dc: DC, busy: BUSY, delay: D) -> Self {
         Self {
             spi,
@@ -67,7 +69,17 @@ where
         }
     }
 
+    /// Initializes the display.  Consumes self to return a [`Display`] that is marked as
+    /// initialized.  Acquiring this marked [`Display`] is necessary to call [`Display::display`].
+    ///
     /// # Errors
+    ///
+    /// Wrapped HAL errors are returned through [`error::Error`].  This includes:
+    ///
+    /// - [`embedded_hal::digital::Error`]
+    /// - [`embedded_hal::spi::Error`]
+    ///
+    /// Please consult HAL documentation for further details.
     pub fn init(
         mut self,
     ) -> Result<
@@ -97,7 +109,18 @@ where
     DC: OutputPin,
     BUSY: InputPin,
 {
+    /// 1. Wakes up the display
+    /// 2. Sends contents of [`Display`] buffer to display for drawing
+    /// 3. Sleeps display
+    ///
     /// # Errors
+    ///
+    /// Wrapped HAL errors are returned through [`error::Error`].  This includes:
+    ///
+    /// - [`embedded_hal::digital::Error`]
+    /// - [`embedded_hal::spi::Error`]
+    ///
+    /// Please consult HAL documentation for further details.
     pub fn display(
         &mut self,
     ) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
@@ -133,19 +156,12 @@ where
     DC: OutputPin,
     BUSY: InputPin,
 {
+    /// Sets a pixel in the buffer at ([`x`], [`y`]) to [`color`].
+    ///
     /// # Errors
-    pub fn clear(
-        &mut self,
-    ) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
-        for x in 0..WIDTH {
-            for y in 0..HEIGHT {
-                self.set_pixel(x, y, color::Color::WHITE)?;
-            }
-        }
-        Ok(())
-    }
-
-    /// # Errors
+    ///
+    /// [`error::Error::PixelOutOfBounds`] may be returned if [`x`] or [`y`] exceed screen
+    /// co-ordinates.
     pub fn set_pixel(
         &mut self,
         x: usize,

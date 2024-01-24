@@ -568,26 +568,6 @@ fn test_display() {
 }
 
 #[test]
-fn test_clear() {
-    let mut hal = Hal::new(&[]);
-
-    let spi = hal.clone().spi();
-    let rst = hal.clone().pin();
-    let dc = hal.clone().pin();
-    let busy = hal.clone().pin();
-    let delay = hal.clone().delay();
-
-    let mut epd = Display::new(spi, rst, dc, busy, delay);
-
-    epd.buffer = [0xff; super::WIDTH * super::HEIGHT / 2];
-    assert_eq!(epd.buffer, [0xff; super::WIDTH * super::HEIGHT / 2]);
-    epd.clear().unwrap();
-    assert_eq!(epd.buffer, [0b00010001; super::WIDTH * super::HEIGHT / 2]);
-
-    hal.done();
-}
-
-#[test]
 fn test_set_pixel() {
     let mut hal = Hal::new(&[]);
 
