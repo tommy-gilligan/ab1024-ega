@@ -112,11 +112,11 @@ where
         self.sleep()
     }
 
-    /// Sets a pixel in the buffer at ([`x`], [`y`]) to [`color`].
+    /// Sets a pixel in the buffer at (`x`, `y`) to `color`.
     ///
     /// # Errors
     ///
-    /// [`error::Error::PixelOutOfBounds`] may be returned if [`x`] or [`y`] exceed screen
+    /// [`error::Error::PixelOutOfBounds`] may be returned if `x` or `y` exceed screen
     /// co-ordinates.
     pub fn set_pixel(
         &mut self,
