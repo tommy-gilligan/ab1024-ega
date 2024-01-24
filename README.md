@@ -1,5 +1,8 @@
 # AB1024-EGA (AC057TC1)
 
+[![ab1024-ega on crates.io](https://img.shields.io/crates/d/ab1024-ega)](https://crates.io/crates/ab1024-ega)
+[![ab1024-ega on docs.rs](https://img.shields.io/docsrs/ab1024-ega)](https://docs.rs/ab1024-ega/latest/uf2_decode/)
+
 An `embedded-hal` SPI driver for AB1024-EGA/AC057TC1 (as used in Inkplate 6
 COLOR).
 
