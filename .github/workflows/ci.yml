@@ -23,3 +23,13 @@ jobs:
       - uses: esp-rs/xtensa-toolchain@v1.5
       - run: cargo +esp clippy --target xtensa-esp32-none-elf -Z build-std=core --examples --lib
       - run: cargo +esp build --release --target xtensa-esp32-none-elf -Z build-std=core --examples
+  release:
+    if: github.ref_type == 'tag'
+    name: create github release from updated tags
+    runs-on: ubuntu-latest
+    needs: [xtensa, std]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ncipollo/release-action@v1
