@@ -67,7 +67,9 @@ where
     /// - [`embedded_hal::spi::Error`]
     ///
     /// Please consult HAL documentation for further details.
-    pub fn init(&mut self) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
+    pub fn init(
+        &mut self,
+    ) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.wakeup()?;
         self.sleep()
     }
@@ -136,7 +138,9 @@ where
         }
     }
 
-    fn reset_panel(&mut self) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
+    fn reset_panel(
+        &mut self,
+    ) -> Result<(), error::Error<BUSY::Error, RST::Error, DC::Error, S::Error>> {
         self.rst.set_low().map_err(error::Error::ResetPin)?;
         self.delay.delay_ms(1u32);
         self.rst.set_high().map_err(error::Error::ResetPin)?;

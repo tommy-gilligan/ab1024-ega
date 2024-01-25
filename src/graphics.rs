@@ -1,9 +1,4 @@
-use crate::{
-    Display,
-    color::Color,
-    WIDTH,
-    HEIGHT
-};
+use crate::{color::Color, Display, HEIGHT, WIDTH};
 use embedded_graphics_core::{
     draw_target::DrawTarget,
     pixelcolor::{raw::RawU4, PixelColor, Rgb888, RgbColor},
@@ -25,10 +20,7 @@ where
     BUSY: InputPin,
 {
     fn size(&self) -> Size {
-        Size::new(
-            WIDTH.try_into().unwrap(),
-            HEIGHT.try_into().unwrap(),
-        )
+        Size::new(WIDTH.try_into().unwrap(), HEIGHT.try_into().unwrap())
     }
 }
 impl<D, S, RST, DC, BUSY> DrawTarget for Display<D, S, RST, DC, BUSY>
