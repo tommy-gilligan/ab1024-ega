@@ -59,7 +59,8 @@ fn main() -> ! {
         .draw(&mut display)
         .unwrap();
 
-    display.init().unwrap().display().unwrap();
+    display.init().unwrap();
+    display.display().unwrap();
 
     Rtc::new(peripherals.LPWR).sleep_deep(&[], &mut delay)
 }

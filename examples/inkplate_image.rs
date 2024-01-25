@@ -50,7 +50,8 @@ fn main() -> ! {
         DitherTarget::new(&mut display);
     bmp.draw(&mut ed).unwrap();
 
-    display.init().unwrap().display().unwrap();
+    display.init().unwrap();
+    display.display().unwrap();
 
     Rtc::new(peripherals.LPWR).sleep_deep(&[], &mut delay)
 }

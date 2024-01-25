@@ -559,7 +559,6 @@ fn test_display() {
         busy,
         delay,
         buffer: [0b0001_0001; (WIDTH * HEIGHT) / 2],
-        state: core::marker::PhantomData,
     }
     .display()
     .unwrap();
