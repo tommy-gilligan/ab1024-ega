@@ -65,13 +65,13 @@ impl From<Rgb888> for Color {
         let (_, display) = RGB_DISPLAY_PAIRS
             .into_iter()
             .min_by_key(|(rgb, _): &(Rgb888, Color)| {
-                let r: u32 =
-                    (<u8 as Into<u32>>::into(color.r())).abs_diff(<u8 as Into<u32>>::into(rgb.r()));
-                let g: u32 =
-                    (<u8 as Into<u32>>::into(color.g())).abs_diff(<u8 as Into<u32>>::into(rgb.g()));
-                let b: u32 =
-                    (<u8 as Into<u32>>::into(color.b())).abs_diff(<u8 as Into<u32>>::into(rgb.b()));
-                r * r + g * g + b * b
+                let r: u16 =
+                    (<u8 as Into<u16>>::into(color.r())).abs_diff(<u8 as Into<u16>>::into(rgb.r()));
+                let g: u16 =
+                    (<u8 as Into<u16>>::into(color.g())).abs_diff(<u8 as Into<u16>>::into(rgb.g()));
+                let b: u16 =
+                    (<u8 as Into<u16>>::into(color.b())).abs_diff(<u8 as Into<u16>>::into(rgb.b()));
+                r + g + b
             })
             .unwrap();
 
