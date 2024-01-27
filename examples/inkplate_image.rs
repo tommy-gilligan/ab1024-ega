@@ -46,8 +46,11 @@ fn main() -> ! {
     let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
     let mut display = ab1024_ega::Display::new(spi, rst, dc, busy, delay);
 
-    let mut ed: DitherTarget<'_, _, _, { ab1024_ega::WIDTH + 1 }> =
-        DitherTarget::new(&mut display, |x| x.into());
+    let mut ed: DitherTarget<'_, _, _, _, { ab1024_ega::WIDTH + 1 }> = DitherTarget::new(
+        &mut display,
+        &|x: Rgb888| x.into(),
+        &|y: ab1024_ega::color::Color| y.into(),
+    );
     bmp.draw(&mut ed).unwrap();
 
     display.init().unwrap();

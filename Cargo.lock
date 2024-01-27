@@ -196,7 +196,7 @@ dependencies = [
 [[package]]
 name = "dither"
 version = "0.1.0"
-source = "git+https://github.com/tommy-gilligan/dither.git#fbd9ed8c6cf836bea37ca1f6230763ec842e212e"
+source = "git+https://github.com/tommy-gilligan/dither.git#4f96646af3ebf89199930f70775bc4595a620a2f"
 dependencies = [
  "embedded-graphics-core",
  "nalgebra",
