@@ -23,6 +23,8 @@ use hal::{
     Delay, Rtc,
 };
 use tinybmp::Bmp;
+use dither::color_cube;
+use dither::color_cube::ColorCube;
 
 const RGB_DISPLAY_PAIRS: [(Rgb888, Color); 7] = [
     (Rgb888::new(0x00, 0x00, 0x00), Color::BLACK),
@@ -34,8 +36,8 @@ const RGB_DISPLAY_PAIRS: [(Rgb888, Color); 7] = [
     (Rgb888::new(0xf0, 0x70, 0x20), Color::ORANGE),
 ];
 
-fn rgb_to_epd(color: Rgb888) -> Color {
-    let (_, display) = RGB_DISPLAY_PAIRS
+fn rgb_to_epd(color: Rgb888) -> (Color, (i16, i16, i16)) {
+    let pair = RGB_DISPLAY_PAIRS
         .into_iter()
         .min_by_key(|(rgb, _): &(Rgb888, Color)| {
             let r: u16 =
@@ -48,16 +50,14 @@ fn rgb_to_epd(color: Rgb888) -> Color {
         })
         .unwrap();
 
-    display
-}
-
-fn epd_to_rgb(color: Color) -> Rgb888 {
-    let (display, _) = RGB_DISPLAY_PAIRS
-        .into_iter()
-        .find(|(_, c): &(Rgb888, Color)| *c == color)
-        .unwrap();
-
-    display
+    (
+        pair.1, 
+        (
+            color.r() as i16 - pair.0.r() as i16,
+            color.g() as i16 - pair.0.g() as i16,
+            color.b() as i16 - pair.0.b() as i16,
+        )
+    )
 }
 
 #[entry]
@@ -83,8 +83,24 @@ fn main() -> ! {
     let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
     let mut display = ab1024_ega::Display::new(spi, rst, dc, busy, delay);
 
-    let mut ed: DitherTarget<'_, _, _, _, { ab1024_ega::WIDTH + 1 }> =
-        DitherTarget::new(&mut display, &rgb_to_epd, &epd_to_rgb);
+    let color_cube: color_cube::ColorCube<Color, 16> =
+        color_cube::ColorCube::from(&|r, g, b| {
+            let pair = RGB_DISPLAY_PAIRS
+                .into_iter()
+                .min_by_key(|(rgb, _): &(Rgb888, Color)| {
+                    (<u8 as Into<u16>>::into(r)).abs_diff(<u8 as Into<u16>>::into(rgb.r())) + 
+                    (<u8 as Into<u16>>::into(g)).abs_diff(<u8 as Into<u16>>::into(rgb.g())) + 
+                    (<u8 as Into<u16>>::into(b)).abs_diff(<u8 as Into<u16>>::into(rgb.b()))
+                })
+                .unwrap();
+            pair.1
+        })
+        .unwrap();
+
+    let binding = |rgb| color_cube.with_error(rgb);
+
+    let mut ed: DitherTarget<'_, _, _, { ab1024_ega::WIDTH + 1 }> =
+        DitherTarget::new(&mut display, &binding);
     bmp.draw(&mut ed).unwrap();
 
     display.init().unwrap();
