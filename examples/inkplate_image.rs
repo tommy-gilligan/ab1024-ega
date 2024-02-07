@@ -10,10 +10,12 @@
 //!
 
 use ab1024_ega::color::Color;
-use dither::DitherTarget;
+use dither::embedded_graphics::DitherTarget;
+use dither::vector::Vector;
 use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use esp_backtrace as _;
+use fixed::types::extra::U16;
 use hal::{
     clock::ClockControl,
     gpio::IO,
@@ -23,41 +25,29 @@ use hal::{
     Delay, Rtc,
 };
 use tinybmp::Bmp;
-use dither::color_cube;
-use dither::color_cube::ColorCube;
+type Num = fixed::FixedI32<U16>;
 
-const RGB_DISPLAY_PAIRS: [(Rgb888, Color); 7] = [
-    (Rgb888::new(0x00, 0x00, 0x00), Color::BLACK),
-    (Rgb888::new(0xFF, 0xFF, 0xFF), Color::WHITE),
-    (Rgb888::new(0x10, 0xcb, 0x10), Color::GREEN),
-    (Rgb888::new(0x20, 0x20, 0xff), Color::BLUE),
-    (Rgb888::new(0xff, 0x30, 0x20), Color::RED),
-    (Rgb888::new(0xff, 0xff, 0x50), Color::YELLOW),
-    (Rgb888::new(0xf0, 0x70, 0x20), Color::ORANGE),
+const RGB_DISPLAY_PAIRS: [(Color, Rgb888); 7] = [
+    (Color::BLACK, Rgb888::new(0x00, 0x00, 0x00)),
+    (Color::WHITE, Rgb888::new(0xFF, 0xFF, 0xFF)),
+    (Color::GREEN, Rgb888::new(0x10, 0xcb, 0x10)),
+    (Color::BLUE, Rgb888::new(0x20, 0x20, 0xff)),
+    (Color::RED, Rgb888::new(0xff, 0x30, 0x20)),
+    (Color::YELLOW, Rgb888::new(0xff, 0xff, 0x50)),
+    (Color::ORANGE, Rgb888::new(0xf0, 0x70, 0x20)),
 ];
 
-fn rgb_to_epd(color: Rgb888) -> (Color, (i16, i16, i16)) {
+fn conversion(source: Vector<Num>) -> (Color, Vector<Num>) {
     let pair = RGB_DISPLAY_PAIRS
         .into_iter()
-        .min_by_key(|(rgb, _): &(Rgb888, Color)| {
-            let r: u16 =
-                (<u8 as Into<u16>>::into(color.r())).abs_diff(<u8 as Into<u16>>::into(rgb.r()));
-            let g: u16 =
-                (<u8 as Into<u16>>::into(color.g())).abs_diff(<u8 as Into<u16>>::into(rgb.g()));
-            let b: u16 =
-                (<u8 as Into<u16>>::into(color.b())).abs_diff(<u8 as Into<u16>>::into(rgb.b()));
-            r + g + b
+        .min_by_key(|(_, rgb): &(Color, Rgb888)| {
+            (source.0).abs_diff(Num::from_num(rgb.r()))
+                + (source.1).abs_diff(Num::from_num(rgb.g()))
+                + (source.2).abs_diff(Num::from_num(rgb.b()))
         })
         .unwrap();
 
-    (
-        pair.1, 
-        (
-            color.r() as i16 - pair.0.r() as i16,
-            color.g() as i16 - pair.0.g() as i16,
-            color.b() as i16 - pair.0.b() as i16,
-        )
-    )
+    (pair.0, source - Vector::from_rgb888(pair.1))
 }
 
 #[entry]
@@ -82,25 +72,9 @@ fn main() -> ! {
 
     let bmp: Bmp<Rgb888> = Bmp::from_slice(include_bytes!("starry-night.bmp")).unwrap();
     let mut display = ab1024_ega::Display::new(spi, rst, dc, busy, delay);
+    let mut ed: DitherTarget<'_, _, _, { ab1024_ega::WIDTH }> =
+        DitherTarget::new(&mut display, &conversion);
 
-    let color_cube: color_cube::ColorCube<Color, 16> =
-        color_cube::ColorCube::from(&|r, g, b| {
-            let pair = RGB_DISPLAY_PAIRS
-                .into_iter()
-                .min_by_key(|(rgb, _): &(Rgb888, Color)| {
-                    (<u8 as Into<u16>>::into(r)).abs_diff(<u8 as Into<u16>>::into(rgb.r())) + 
-                    (<u8 as Into<u16>>::into(g)).abs_diff(<u8 as Into<u16>>::into(rgb.g())) + 
-                    (<u8 as Into<u16>>::into(b)).abs_diff(<u8 as Into<u16>>::into(rgb.b()))
-                })
-                .unwrap();
-            pair.1
-        })
-        .unwrap();
-
-    let binding = |rgb| color_cube.with_error(rgb);
-
-    let mut ed: DitherTarget<'_, _, _, { ab1024_ega::WIDTH + 1 }> =
-        DitherTarget::new(&mut display, &binding);
     bmp.draw(&mut ed).unwrap();
 
     display.init().unwrap();
